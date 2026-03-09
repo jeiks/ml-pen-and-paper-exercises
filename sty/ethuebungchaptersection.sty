@@ -225,14 +225,14 @@
 \newcounter{uebcounter}
 \setcounter{uebcounter}{0}
 \renewcommand{\theuebcounter}{\arabic{uebcounter}}
-\newcommand{\theHuebcounter}{\arabic{uebcounter}} % for hyperref
+\providecommand{\theHuebcounter}{\arabic{uebcounter}} % for hyperref
 %
 % Counter for \subuebung{}/\subexercise{}
 %
 \newcounter{subuebcounter}[uebcounter]
 \setcounter{subuebcounter}{0}
 \renewcommand{\thesubuebcounter}{\theuebcounter.\arabic{subuebcounter}}
-\newcommand{\theHsubuebcounter}{\theHuebcounter.\arabic{subuebcounter}} % for hyperref
+\providecommand{\theHsubuebcounter}{\theHuebcounter.\arabic{subuebcounter}} % for hyperref
 
 
 %

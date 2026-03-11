@@ -46,9 +46,9 @@
 \usepackage{chngcntr}  % needed to deal with the per-chapter numbering
 
 \ifSOL
-  \usepackage[sol, nogeom]{sty/ethuebungchaptersection}  % loads hyperref
+  \usepackage[sol, nogeom, portuguese]{sty/ethuebungchaptersection}  % loads hyperref
 \else
-  \usepackage[nogeom]{sty/ethuebungchaptersection}       % loads hyperref
+  \usepackage[nogeom, portuguese]{sty/ethuebungchaptersection}       % loads hyperref
 \fi
 \UebungStyle{LargeSolutions}
 
@@ -100,7 +100,7 @@
 
 \usepackage{minitoc}
 \setcounter{minitocdepth}{1}        % only sections
-\renewcommand{\mtctitle}{Exercises} % changes the title of the minitoc
+\renewcommand{\mtctitle}{Exerc\'icios} % changes the title of the minitoc
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Packages for code display
@@ -207,48 +207,48 @@
 
 \mainmatter
 
-\chapter{Linear Algebra}
+\chapter{\'Algebra Linear}
 \minitoc
 \include{topics/linear-algebra} 
 
-\chapter{Optimisation} 
+\chapter{Otimiza\'c\~ao} 
 \minitoc
 \include{topics/optimisation} 
 
-\chapter{Directed Graphical Models} 
+\chapter{Modelos de Grafos Direcionados} 
 \minitoc
 \include{topics/directed-graphical-models} 
 
-\chapter{Undirected Graphical Models}
+\chapter{Modelos de Grafos N\~ao Direcionados}
 \minitoc
 \include{topics/undirected-graphical-models} 
 
-\chapter{Expressive Power of Graphical Models} 
+\chapter{Poder de Express\~ao de Modelos de Grafos}
 \minitoc
 \include{topics/expressive-power-of-graphical-models} 
 
-\chapter{Factor Graphs and Message Passing} 
+\chapter{Grafos de Fatores e Passagem de Mensagens}
 \minitoc
 \include{topics/factor-graphs-and-message-passing} 
 
-\chapter{Inference for Hidden Markov Models}
+\chapter{Infer\^encia para Modelos Ocultos de Markov}
 \minitoc
 \include{topics/inference-for-hidden-markov-models} 
 
-\chapter{Model-Based Learning} 
+\chapter{Aprendizado Baseado em Modelos} 
 \minitoc
 \include{topics/model-based-learning}
 
-\chapter{Sampling and Monte Carlo Integration}
+\chapter{Amostragem e Integra\'c\~ao de Monte Carlo}
 \minitoc
 \include{topics/sampling-and-monte-carlo-integration}
 
-\chapter{Variational Inference and Learning}
+\chapter{Infer\^encia Variacional e Aprendizado}
 \minitoc
 \include{topics/variational-inference}
 
 \bibliography{refs}
-\addcontentsline{toc}{chapter}{Bibliography}
+\addcontentsline{toc}{chapter}{Refer\^encias Bibliogr\'aficas}
 %\appendix
 
 \end{document}

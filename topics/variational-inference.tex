@@ -1,874 +1,864 @@
 % Emacs, this is -*-latex-*-
 
-\ex{Mean field variational inference I}
+\ex{Infer\^encia variacional de campo m\'edio I}
 \label{ex:MFVI-I}
-Let $\ELBOx(q)$ be the evidence lower bound for the marginal $p(\x)$ of a joint pdf/pmf $p(\x,\y)$,
+Seja $\ELBOx(q)$ o limite inferior da evid\^encia para a marginal $p(\x)$ de uma fdp/fmp conjunta $p(\x,\y)$,
 \begin{equation}
-  \ELBOx(q) = \E_{q(\y|\x)} \left[\log \frac{p(\x,\y)}{q(\y|\x)}\right].
-  \end{equation}
-Mean field variational inference assumes that the variational distribution $q(\y|\x)$ fully factorises, i.e.
-\begin{equation}
-  q(\y | \x) = \prod_{i=1}^d q_i(y_i | \x),
+    \ELBOx(q) = \E_{q(\y|\x)} \left[\log \frac{p(\x,\y)}{q(\y|\x)}\right].
 \end{equation}
-when $\y$ is $d$-dimensional. An approach to learning the $q_i$ for
-each dimension is to update one at a time while keeping the others fixed. We
-here derive the corresponding update equations.
+A infer\^encia variacional de campo m\'edio (*mean field*) assume que a distribui\'c\~ao variacional $q(\y|\x)$ se fatoriza completamente, isto \'e,
+\begin{equation}
+    q(\y | \x) = \prod_{i=1}^d q_i(y_i | \x),
+\end{equation}
+quando $\y$ \'e $d$-dimensional. Uma abordagem para aprender os $q_i$ para
+cada dimens\~ao \'e atualizar um de cada vez enquanto mant\'em os outros fixos. N\'os
+aqui derivamos as equa\'c\~oes de atualiza\'c\~ao correspondentes.
+
+
 
 \begin{exenumerate}
-\item Show that the evidence lower bound $\ELBOx(q)$ can be written as
-\begin{equation}
-  \ELBOx(q) = \E_{q_1(y_1|\x)} \E_{q(\y_{\setminus 1}|\x)}\left[ \log p(\x,\y)\right] - \sum_{i=1}^d \E_{q_i(y_i|\x)} \left[\log q_i(y_i|\x)\right]
-\end{equation}
-where $q(\y_{\setminus 1}|\x) = \prod_{i=2}^d q_i(y_i | \x)$ is the variational distribution without $q_1(y_1|\x)$.
-
-\begin{solution}
-  This follows directly from the definition of the ELBO and the assumed factorisation of $q(\y|\x)$. We have
-  \begin{align}
-    \ELBOx(q) &= \E_{q(\y|\x)} \log p(\x,\y) - \E_{q(\y|\x)} \log q(\y|\x) \\
-    & = \E_{ \prod_{i=1}^d q_i(y_i | \x)}  \log p(\x,\y) - \E_{ \prod_{i=1}^d q_i(y_i | \x)} \sum_{i=1}^d \log q_i(y_i|\x) \\
-    & = \E_{ \prod_{i=1}^d q_i(y_i | \x)}  \log p(\x,\y) - \sum_{i=1}^d  \E_{q_i(y_i | \x)} \log q_i(y_i|\x) \\
-    & = \E_{q_1(y_1|\x)} \E_{ \prod_{i=2}^d q_i(y_i | \x)}  \log p(\x,\y) - \sum_{i=1}^d  \E_{q_i(y_i | \x)} \log q_i(y_i|\x)\\
-    & = \E_{q_1(y_1|\x)} \E_{q(\y_{\setminus 1}|\x)}\left[ \log p(\x,\y)\right] - \sum_{i=1}^d \E_{q_i(y_i|\x)} \left[\log q_i(y_i|\x)\right]
-  \end{align}
-  We have here used the linearity of expectation. In case of continuous random variables, for instance, we have
-  \begin{align}
- \E_{ \prod_{i=1}^d q_i(y_i | \x)} \sum_{i=1}^d \log q_i(y_i|\x) & = \int  q_1(y_1 | \x)\cdot \ldots\cdot q_d(y_d|\x)  \sum_{i=1}^d \log q_i(y_i|\x) d y_1\ldots d y_d\\
- & =  \sum_{i=1}^d \int q_1(y_1 | \x)\cdot \ldots \cdot q_d(y_d|\x) \log q_i(y_i|\x) d y_1\ldots d y_d\\
- & =  \sum_{i=1}^d \int q_i(y_i | \x)\log q_i(y_i|\x) d y_i \underbrace{\int \prod_{j\neq i} q_j(y_j|\x) d y_j}_{=1}\\
- & =  \sum_{i=1}^d E_{q_i(y_i|\x)} \log q_i(y_i|\x)
-\end{align}
-For discrete random variables, the integral is replaced with a sum and leads to the same result.
-
-\end{solution}
-
-\item Assume that we would like to update $q_1(y_1 |\x)$ and that the
-  variational marginals of the other dimensions are kept fixed. Show that
-  \begin{equation}
-    \argmax_{q_1(y_1|\x)} \ELBOx(q) = \argmin_{q_1(y_1|\x)} \KL(q_1(y_1|\x) || \bar{p}(y_1|\x))
-  \end{equation}
-  with
-\begin{equation}
-  \log \bar{p}(y_1|\x) = \E_{q(\y_{\setminus 1}|\x)}\left[ \log p(\x,\y)\right] + \text{const},
-\end{equation}
-where $\text{const}$ refers to terms not depending on $y_1$. That is,
-\begin{equation}
-\bar{p}(y_1|\x) = \frac{1}{Z} \exp\left[ \E_{q(\y_{\setminus
-      1}|\x)}\left[ \log p(\x,\y)\right] \right],
-\end{equation}
-where $Z$ is the normalising constant. Note that variables $y_2, \ldots, y_d$
-are marginalised out due to the expectation with respect to $q(\y_{\setminus
-  1}|\x)$.
-
-  \begin{solution}
-    Starting from 
+    \item Mostre que o limite inferior da evid\^encia $\ELBOx(q)$ pode ser escrito como
     \begin{equation}
-      \ELBOx(q) = \E_{q_1(y_1|\x)} \E_{q(\y_{\setminus 1}|\x)}\left[ \log p(\x,\y)\right] - \sum_{i=1}^d \E_{q_i(y_i|\x)} \left[\log q_i(y_i|\x)\right]
+        \ELBOx(q) = \E_{q_1(y_1|\x)} \E_{q(\y_{\setminus 1}|\x)}\left[ \log p(\x,\y)\right] - \sum_{i=1}^d \E_{q_i(y_i|\x)} \left[\log q_i(y_i|\x)\right]
     \end{equation}
-  we drop terms that do not depend on $q_1$. We then obtain
-  \begin{align}
-      J(q_1) & =  \E_{q_1(y_1|\x)} \E_{q(\y_{\setminus 1}|\x)}\left[ \log p(\x,\y)\right] -  \E_{q_1(y_1|\x)} \left[\log q_1(y_1|\x)\right]\\
+    onde $q(\y_{\setminus 1}|\x) = \prod_{i=2}^d q_i(y_i | \x)$ \'e a distribui\'c\~ao variacional sem $q_1(y_1|\x)$.
+    
+    \begin{solution}
+        Isso segue diretamente da defini\'c\~ao do ELBO e da fatoriza\'c\~ao assumida de $q(\y|\x)$. Temos
+        \begin{align}
+            \ELBOx(q) &= \E_{q(\y|\x)} \log p(\x,\y) - \E_{q(\y|\x)} \log q(\y|\x) \\
+            & = \E_{ \prod_{i=1}^d q_i(y_i | \x)}  \log p(\x,\y) - \E_{ \prod_{i=1}^d q_i(y_i | \x)} \sum_{i=1}^d \log q_i(y_i|\x) \\
+            & = \E_{ \prod_{i=1}^d q_i(y_i | \x)}  \log p(\x,\y) - \sum_{i=1}^d  \E_{q_i(y_i | \x)} \log q_i(y_i|\x) \\
+            & = \E_{q_1(y_1|\x)} \E_{ \prod_{i=2}^d q_i(y_i | \x)}  \log p(\x,\y) - \sum_{i=1}^d  \E_{q_i(y_i | \x)} \log q_i(y_i|\x)\\
+            & = \E_{q_1(y_1|\x)} \E_{q(\y_{\setminus 1}|\x)}\left[ \log p(\x,\y)\right] - \sum_{i=1}^d \E_{q_i(y_i|\x)} \left[\log q_i(y_i|\x)\right]
+        \end{align}
+        Usamos aqui a linearidade da esperan\'ca. No caso de vari\'aveis aleat\'orias cont\'inuas, por exemplo, temos
+        \begin{align}
+            \E_{ \prod_{i=1}^d q_i(y_i | \x)} \sum_{i=1}^d \log q_i(y_i|\x) & = \int  q_1(y_1 | \x)\cdot \ldots\cdot q_d(y_d|\x)  \sum_{i=1}^d \log q_i(y_i|\x) d y_1\ldots d y_d\\
+            & =  \sum_{i=1}^d \int q_1(y_1 | \x)\cdot \ldots \cdot q_d(y_d|\x) \log q_i(y_i|\x) d y_1\ldots d y_d\\
+            & =  \sum_{i=1}^d \int q_i(y_i | \x)\log q_i(y_i|\x) d y_i \underbrace{\int \prod_{j\neq i} q_j(y_j|\x) d y_j}_{=1}\\
+            & =  \sum_{i=1}^d E_{q_i(y_i|\x)} \log q_i(y_i|\x)
+        \end{align}
+        Para vari\'aveis aleat\'orias discretas, a integral \'e substitu\'ida por uma soma e leva ao mesmo resultado.
+        
+    \end{solution}
+    
+    \item Assuma que gostar\'iamos de atualizar $q_1(y_1 |\x)$ e que as
+    marginais variacionais das outras dimens\~oes s\~ao mantidas fixas. Mostre que
+    \begin{equation}
+        \argmax_{q_1(y_1|\x)} \ELBOx(q) = \argmin_{q_1(y_1|\x)} \KL(q_1(y_1|\x) || \bar{p}(y_1|\x))
+    \end{equation}
+    com
+    \begin{equation}
+        \log \bar{p}(y_1|\x) = \E_{q(\y_{\setminus 1}|\x)}\left[ \log p(\x,\y)\right] + \text{const},
+    \end{equation}
+    onde $\text{const}$ refere-se a termos que n\~ao dependem de $y_1$. Isto \'e,
+    \begin{equation}
+        \bar{p}(y_1|\x) = \frac{1}{Z} \exp\left[ \E_{q(\y_{\setminus
+                1}|\x)}\left[ \log p(\x,\y)\right] \right],
+    \end{equation}
+    onde $Z$ \'e a constante de normaliza\'c\~ao. Note que as vari\'aveis $y_2, \ldots, y_d$
+    s\~ao marginalizadas devido \`a esperan\'ca em rela\'c\~ao a $q(\y_{\setminus
+        1}|\x)$.
+    
+    \begin{solution}
+        Come\'cando de 
+        \begin{equation}
+            \ELBOx(q) = \E_{q_1(y_1|\x)} \E_{q(\y_{\setminus 1}|\x)}\left[ \log p(\x,\y)\right] - \sum_{i=1}^d \E_{q_i(y_i|\x)} \left[\log q_i(y_i|\x)\right]
+        \end{equation}
+        descartamos os termos que n\~ao dependem de $q_1$. Obtemos ent\~ao
+        \begin{align}
+            J(q_1) & =  \E_{q_1(y_1|\x)} \E_{q(\y_{\setminus 1}|\x)}\left[ \log p(\x,\y)\right] -  \E_{q_1(y_1|\x)} \left[\log q_1(y_1|\x)\right]\\
             & =  \E_{q_1(y_1|\x)} \left[\log \bar{p}(y_1|\x) - \text{const} \right]- \E_{q_1(y_1|\x)} \left[\log q_1(y_1|\x)\right]\\
             & = \E_{q_1(y_1|\x)} \log \bar{p}(y_1|\x) - \E_{q_1(y_1|\x)} \left[\log q_1(y_1|\x)\right] - \text{const}\\
             & = \E_{q_1(y_1|\x)}\left[ \log \frac{\bar{p}(y_1|\x)}{ q_1(y_1|\x)} \right] - \text{const}\\
             & = -\KL( q_1(y_1|\x) || \bar{p}(y_1|\x) ) - \text{const}
-    \end{align}
-    Hence
-    \begin{equation}
-      \argmax_{q_1(y_1|\x)} \ELBOx(q) = \argmin_{q_1(y_1|\x)} \KL(q_1(y_1|\x) || \bar{p}(y_1|\x))
-    \end{equation}
-    
-  \end{solution}
-
-\item Conclude that given $q_i(y_i|\x)$, $i=2, \ldots, d$, the optimal $q_1(y_1|\x)$ equals $\bar{p}(y_1|\x)$.
-
-  This then leads to an iterative updating scheme where we cycle
-  through the different dimensions, each time updating the corresponding marginal variational distribution according to:
-  \begin{align}
-    q_i(y_i|\x) &=  \bar{p}(y_i|\x), &  \bar{p}(y_i|\x) &= \frac{1}{Z} \exp\left[ \E_{q(\y_{\setminus i}|\x)}\left[ \log p(\x,\y)\right] \right]
-  \end{align}
-  where $q(\y_{\setminus i}|\x) = \prod_{j \neq i} q(y_j | \x)$ is the product of all marginals without marginal $q_i(y_i|\x)$.
-
-  \begin{solution}
-    This follows immediately from the fact that the KL divergence is
-    minimised when $q_1(y_1|\x) = \bar{p}(y_1|\x)$. Side-note: The
-    iterative update rule can be considered to be coordinate ascent
-    optimisation in function space, where each ``coordinate''
-    corresponds to a $q_i(y_i|\x)$.
-    
-  \end{solution}
-\end{exenumerate}
-
-% --------------------------------------------------
-
-\ex{Mean field variational inference II}
-Assume random variables $y_1, y_2, x$ are generated according to the following process
-\begin{align}
-  y_1 &\sim \Gauss(y_1; 0, 1) &   y_2 &\sim \Gauss(y_2; 0, 1) \\
-  n &\sim \Gauss(n; 0, 1)    &    x & = y_1+y_2+n & 
-\end{align}
-where $y_1, y_2, n$ are statistically independent.
-
-\begin{exenumerate}
-
-\item $y_1, y_2, x$ are jointly Gaussian. Determine their mean and their
-  covariance matrix.
-
-  \begin{solution}
-    
-    The expected value of $y_1$ and $y_2$ is zero. By linearity of
-    expectation, the expected value of $x$ is
-    \begin{equation}
-      \E(x) = \E(y_1) + \E(y_2) + \E(n) = 0
-    \end{equation}
-    The variance of $y_1$ and $y_2$ is 1. Since $y_1, y_2, n$ are statistically independent,
-    \begin{equation}
-      \Var(x) = \Var(y_1) + \Var(y_2) + \Var(n) = 1 + 1 + 1 = 3.
-    \end{equation}
-    The covariance between $y_1$ and $x$ is
-    \begin{align}
-      \text{cov}(y_1, x) &= \E( (y_1-\E(y_1))(x-\E(x))) = \E( y_1 x) \\
-      &= \E( y_1(y_1+y_2+n) ) = \E(y_1^2) + \E(y_1 y_2) + \E(y_1 n)\\
-      &= 1 +  \E(y_1)\E(y_2) + \E(y_1)\E(n)\\
-      &= 1 + 0 + 0
-    \end{align}
-    where we have used that $y_1$ and $x$ have zero mean and the independence assumptions.
-
-    The covariance between $y_2$ and $x$ is computed in the same way and equals 1 too.
-
-    We thus obtain the covariance matrix $\Sigmab$,
-    \begin{equation}
-      \Sigmab = \begin{pmatrix}
-        1 & 0 & 1\\
-        0 & 1 & 1\\
-        1 & 1 & 3
-      \end{pmatrix}
-    \end{equation}
-    
-  \end{solution}
-
-\item The conditional $p(y_1, y_2 | x)$ is Gaussian with mean $\m$ and covariance $\C$,
-  \begin{align}
-    \m &= \frac{x}{3} \begin{pmatrix}
-      1\\
-      1
-    \end{pmatrix}
-    &
-    \C & = \frac{1}{3} \begin{pmatrix}
-      2 &-1 \\
-     -1 & 2
-    \end{pmatrix}
-  \end{align}
-  Since $x$ is the sum of three random variables that have the
-  same distribution, it makes intuitive sense that the mean assigns
-  $1/3$ of the observed value of $x$ to $y_1$ and $y_2$. Moreover,
-  $y_1$ and $y_2$ are negatively correlated since an increase in $y_1$
-  must be compensated with a decrease in $y_2$.
-
-  Let us now approximate the posterior $p(y_1, y_2 | x)$ with mean
-  field variational inference. Determine the optimal variational
-  distribution using the method and results from \exref{ex:MFVI-I}. You may use that
-  \begin{align}
-    p(y_1, y_2, x) &= \Gauss\left( (y_1, y_2, x); \zerob, \Sigmab \right) &  \Sigmab &= \begin{pmatrix} 
-      1 & 0 & 1\\
-      0 & 1 & 1\\
-      1 & 1 & 3
-    \end{pmatrix}
-    &
-    \Sigmab^{-1} &= \begin{pmatrix} 
-      2 & 1 & -1\\
-      1 & 2 & -1\\
-      -1 & -1 & 1
-    \end{pmatrix}
-  \end{align}
-  
-  \begin{solution}
-    The mean field assumption means that the variational distribution is assumed to factorise as
-    \begin{equation}
-      q(y_1, y_2 | x) = q_1(y_1 | x) q_2(y_2 | x)
-    \end{equation}
-    From \exref{ex:MFVI-I}, the optimal $q_1(y_1|x)$ and $q_2(y_2|x)$ satisfy
-     \begin{align}
-       q_1(y_1|x) &=  \bar{p}(y_1|x), &  \bar{p}(y_1|x) &= \frac{1}{Z} \exp\left[ \E_{q_2(y_2|x)}\left[ \log p(y_1, y_2, x)\right] \right]\\
-       q_2(y_2|x) &=  \bar{p}(y_2|x), &  \bar{p}(y_2|x) &= \frac{1}{Z} \exp\left[ \E_{q_1(y_1|x)}\left[ \log p(y_1, y_2, x)\right] \right]
-     \end{align}
-    Note that these are coupled equations: $q_2$ features in the
-    equation for $q_1$ via $\bar{p}(y_1|x)$, and $q_1$ features in
-    the equation for $q_2$ via $\bar{p}(y_2|x)$. But we have two
-    equations for two unknowns, which for the Gaussian joint model
-    $p(x, y_1, y_2)$ can be solved in closed form.
-
-    Given the provided equation for $p(y_1, y_2, x)$, we have that
-    \begin{align}
-      \log p(y_1, y_2, x) & = -\frac{1}{2} \begin{pmatrix}
-        y_1\\
-        y_2\\
-        x
-      \end{pmatrix}^\top
-      \begin{pmatrix}
-        2 & 1 & -1\\
-        1 & 2 & -1\\
-        -1 & -1 & 1
-      \end{pmatrix}
-      \begin{pmatrix}
-        y_1\\
-        y_2\\
-        x
-      \end{pmatrix} + \text{const}\\
-        & = -\frac{1}{2} \left( 2 y_1^2 + 2 y_2^2 + x^2 + 2 y_1 y_2 - 2 y_1 x - 2y_2 x \right) + \text{const}
-    \end{align}
-    
-    Let us start with the equation for $\bar{p}(y_1|x)$. It is easier to work in the logarithmic domain, where we obtain:
-    \begin{align}
-      \log  \bar{p}(y_1|x) & =  \E_{q_2(y_2|x)}\left[ \log p(y_1, y_2, x)\right] + \text{const}\\
-      & = -\frac{1}{2} \E_{q_2(y_2|x)}\left[  2 y_1^2 + 2 y_2^2 + x^2 + 2 y_1 y_2 - 2 y_1 x - 2y_2 x \right] + \text{const}\\
-      & = -\frac{1}{2} \left(2 y_1^2 + 2 y_1 \E_{q_2(y_2|x)}[y_2] - 2 y_1 x \right) + \text{const}\\
-      & = -\frac{1}{2} \left( 2 y_1^2 +2y_1 m_2 - 2 y_1 x \right) + \text{const}\\
-      & = -\frac{1}{2} \left( 2 y_1^2 - 2 y_1 (x-m_2) \right) + \text{const}
-      \label{eq:barp1}
-    \end{align}
-    where we have absorbed all terms not involving $y_1$ into the constant. Moreover, we set $\E_{q_2(y_2|x)}[y_2]=m_2$.
-
-    Note that an arbitrary Gaussian density $\Gauss(y; m, \sigma^2)$
-    with mean $m$ and variance $\sigma^2$ can be written in the
-    log-domain as
-    \begin{align}
-      \log \Gauss(y; m, \sigma^2) & = -\frac{1}{2}\frac{(y-m)^2}{\sigma^2} + \text{const}\\
-      & = -\frac{1}{2} \left( \frac{y^2}{\sigma^2} -2y \frac{m}{\sigma^2} \right) + \text{const}
-      \label{eq:loggauss}
-    \end{align}
-    Comparison with \eqref{eq:barp1} shows that $\bar{p}(y_1|x)$, and
-    hence $q_1(y_1 | x)$, is Gaussian with variance and mean equal to
-    \begin{align}
-      \sigma_1^2 &= \frac{1}{2} & m_1 & = \frac{1}{2}(x-m_2)
-    \end{align}
-    Note that we have not made a Gaussianity assumption on $q_1(y_1 |
-    x)$. The optimal $q_1(y_1 | x)$ turns out to be Gaussian because
-    the model $p(y_1, y_2, x)$ is Gaussian.
-    
-    The equation for $\bar{p}(y_2|x)$ gives similarly
-    \begin{align}
-      \log  \bar{p}(y_2|x) & =  \E_{q_1(y_1|x)}\left[ \log p(y_1, y_2, x)\right] + \text{const}\\
-      & = -\frac{1}{2} \E_{q_1(y_1|x)}\left[  2 y_1^2 + 2 y_2^2 + x^2 + 2 y_1 y_2 - 2 y_1 x - 2y_2 x \right] + \text{const}\\
-      & = -\frac{1}{2} \left(2 y_2^2 + 2 \E_{q_1(y_1|x)}[y_1] y_2 - 2y_2 x \right) + \text{const}\\
-      & = -\frac{1}{2} \left(2 y_2^2 + 2 m_1 y_2 - 2 y_2 x \right) + \text{const}\\
-      & = -\frac{1}{2} \left(2 y_2^2 - 2 y_2(x-m_1) \right) + \text{const}
-      \label{eq:barp2}
-    \end{align}
-    where we have absorbed all terms not involving $y_2$ into the
-    constant. Moreover, we set $\E_{q_1(y_1|x)}[y_1]=m_1$. With
-    \eqref{eq:loggauss}, this is defines a Gaussian distribution with 
-    variance and mean equal to
-    \begin{align}
-      \sigma_2^2 &= \frac{1}{2} & m_2 & = \frac{1}{2}(x-m_1)
-    \end{align}
-    Hence the optimal marginal variational distributions $q_1(y_1|x)$ and
-    $q_2(y_2|x)$ are both Gaussian with variance equal to $1/2$. Their
-    means satisfy
-    \begin{align}
-      m_1 & = \frac{1}{2}(x-m_2) & m_2  & = \frac{1}{2}(x-m_1)
-    \end{align}
-    These are two equations for two unknowns. We can solve them as follows   
-    \begin{align}
-      2 m_1 &= x - m_2 \\
-      & = x -\frac{1}{2}(x-m_1)\\
-      4 m_1 & = 2 x -x + m_1 \\
-      3 m_1 & = x\\
-      m_1 & = \frac{1}{3} x
-    \end{align}
-    Hence
-    \begin{equation}
-     m_2 = \frac{1}{2} x - \frac{1}{6} x = \frac{2}{6} x = \frac{1}{3} x
-    \end{equation}
-    In summary, we find
-    \begin{align}
-      q_1(y_1 | x) & = \Gauss\left(y_1; \frac{x}{3}, \frac{1}{2}\right) &  q_2(y_2 | x) & = \Gauss\left(y_2; \frac{x}{3}, \frac{1}{2}\right)
-    \end{align}
-    and the optimal variational distribution $q(y_1, y_2|x) =
-    q_1(y_1|x) q_2(y_2|x)$ is Gaussian. We have made the mean field
-    (independence) assumption but not the Gaussianity
-    assumption. Gaussianity of the variational distribution is a
-    consequence of the Gaussianity of the model $p(y_1, y_2, x)$.
-
-    Comparison with the true posterior shows that the mean field
-    variational distribution $q(y_1, y_2 | x)$ has the same mean but
-    ignores the correlation and underestimates the marginal
-    variances. The true posterior and the mean field approximation are
-    shown in Figure \ref{fig:meanfield}.
-
-    \begin{figure}[h!]
-      \centering
-      \includegraphics[width=0.75\textwidth]{meanfield}
-      \caption{\label{fig:meanfield}In blue: correlated true posterior. In red: mean field approximation.}
-    \end{figure}
-  \end{solution}
-
-
-  
-\end{exenumerate}
-% --------------------------------------------------
-\ex{Variational posterior approximation I}
-
-We have seen that maximising the evidence lower bound (ELBO) with
-respect to the variational distribution $q$ minimises the
-Kullback-Leibler divergence to the true posterior $p$. We here assume
-that $q$ and $p$ are probability density functions so that the
-Kullback-Leibler divergence between them is defined as
-\begin{equation}
-  \KL(q || p) = \int q(\x) \log \frac{q(\x)}{p(\x)} \ud \x = \E_q \left[\log \frac{q(\x)}{p(\x)}\right].
-\end{equation}
-
-
-\begin{exenumerate}
-
-\item You can here assume that $\x$ is one-dimensional so that $p$
-  and $q$ are univariate densities. Consider the case where $p$ is
-  a bimodal density but the variational densities $q$ are
-  unimodal. Sketch a figure that shows $p$ and a variational
-  distribution $q$ that has been learned by minimising $\text{KL}(q
-  || p)$. Explain qualitatively why the sketched $q$ minimises
-  $\text{KL}(q || p)$.
-
-  \begin{solution}
-
-  A possible sketch is shown in the figure below.
-
-  \begin{figure}[h!]
-    \centering
-    \includegraphics[width = 0.5 \textwidth]{KL-asym}
-  \end{figure}
-
-  Explanation: We can divide the domain of $p$ and $q$ into the areas
-  where $p$ is small (zero) and those where $p$ has significant
-  mass. Since the objective features $q$ in the numerator while $p$ is
-  in the denominator, an optimal $q$ needs to be zero where $p$ is
-  zero. Otherwise, it would incur a large penalty (division by
-  zero). Since we take the expectation with respect to $q$, however,
-  regions where $p>0$ do not need to be covered by $q$; cutting them
-  out does not incur a penalty. Hence, optimal unimodal $q$ only cover
-  one peak of the bimodal $p$.
-   
-  \end{solution}
-
-  
-\item Assume that the true posterior $p(\x) = p(x_1, x_2)$ factorises into two Gaussians of mean zero and variances $\sigma_1^2$ and $\sigma_2^2$,
-  \begin{equation}
-    p(x_1,x_2) = \frac{1}{\sqrt{2\pi \sigma_1^2}} \exp\left[-\frac{x_1^2}{2 \sigma_1^2}\right]\frac{1}{\sqrt{2\pi \sigma_2^2}} \exp\left[-\frac{x_2^2}{2 \sigma_2^2}\right].
-  \end{equation}
-  Assume further that the variational density $q(x_1,x_2; \lambda^2)$ is parametrised as
-  \begin{equation}
-    q(x_1,x_2;\lambda^2) = \frac{1}{2\pi \lambda^2} \exp\left[-\frac{x_1^2+x_2^2}{2 \lambda^2}\right]
-    \end{equation}
-  where $\lambda^2$ is the variational parameter that is learned
-  by minimising $ \KL(q || p)$. If $\sigma^2_2$ is much
-  larger than $\sigma^2_1$, do you expect $\lambda^2$ to be closer to $\sigma_2^2$
-  or to $\sigma_1^2$? Provide an explanation.
-
-  \begin{solution}
-    The learned variational parameter will be closer to $\sigma_1^2$
-    (the smaller of the two $\sigma_i^2$).
-      
-    Explanation: First note that the $\sigma_i^2$ are the variances
-    along the two different axes, and that $\lambda^2$ is the single
-    variance for both $x_1$ and $x_2$. The objective penalises $q$ if
-    it is non-zero where $p$ is zero (see above). The variational
-    parameter $\lambda^2$ thus will get adjusted during learning so
-    that the variance of $q$ is close to the smallest of the two
-    $\sigma_i^2$.
-
-  \end{solution}
-
-\end{exenumerate}
-
-% --------------------------------------------------
-
-\ex{Variational posterior approximation II}
-
-We have seen that maximising the evidence lower bound (ELBO) with
-respect to the variational distribution minimises the
-Kullback-Leibler divergence to the true posterior. We here
-investigate the nature of the approximation if the family of
-variational distributions does not include the true posterior.
-
-\begin{exenumerate}
-
-\item Assume that the true posterior for $\x = (x_1, x_2)$ is given by
-  \begin{equation}
-    p(\x) = \normal(x_1 ; \sigma_1^2)\normal(x_2 ; \sigma_2^2) 
-  \end{equation}
-  and that our variational distribution $q(\x; \lambda^2)$ is
-  \begin{equation}
-    q(\x; \lambda^2) = \normal(x_1 ; \lambda^2)\normal(x_2 ; \lambda^2),
-  \end{equation}
-  where $\lambda >0$ is the variational parameter. Provide an
-  equation for
-  \begin{equation}
-    J(\lambda) = \KL(q(\x; \lambda^2) || p(\x)),
-  \end{equation}
-  where you can omit additive terms that do not depend on
-  $\lambda$. 
-
-  \begin{solution}
-
-    We write
-    \begin{align}
-      \text{KL}(q(\x; \lambda^2) || p(\x)) & = \E_q \left[ \log  \frac{q(\x; \lambda^2)}{p(\x)} \right]\\
-      & = \E_q \log q(\x; \lambda^2) - \E_q \log p(\x)\\
-      & = \E_q \log  \normal(x_1 ; \lambda^2) + \E_q \log \normal(x_2 ; \lambda^2) \nonumber \\
-      & \phantom{=} - \E_q \log \normal(x_1 ; \sigma_1^2) - \E_q \log \normal(x_2 ; \sigma_2^2)
-    \end{align}
-    
-    We further have
-    \begin{align}
-      \E_q \log  \normal(x_i ; \lambda^2) & = \E_q \log \left[ \frac{1}{\sqrt{2\pi \lambda^2}} \exp \left[-\frac{x_i^2}{2 \lambda^2} \right] \right]\\
-      & = \log \left[ \frac{1}{\sqrt{2\pi \lambda^2}}\right] -\E_q \left[\frac{x_i^2}{2 \lambda^2}\right]\\
-      & = -\log \lambda - \frac{\lambda^2}{2\lambda^2} + \text{const}\\
-      & = -\log \lambda - \frac{1}{2} + \text{const}\\
-      & = -\log \lambda + \text{const}
-    \end{align}
-    where we have used that for zero mean $x_i$, $\E_q [x_i^2] = \var(x_i) = \lambda^2$. 
-
-    We similarly obtain
-    \begin{align}
-    \E_q \log \normal(x_i ; \sigma_i^2) & = \E_q \log \left[ \frac{1}{\sqrt{2\pi \sigma_i^2}} \exp \left[-\frac{x_i^2}{2 \sigma_i^2} \right] \right]\\
-      & = \log \left[ \frac{1}{\sqrt{2\pi \sigma_i^2}}\right] -\E_q \left[\frac{x_i^2}{2 \sigma_i^2}\right]\\
-    & = -\log \sigma_i - \frac{\lambda^2}{2\sigma_i^2} + \text{const}\\
-    & = - \frac{\lambda^2}{2\sigma_i^2} + \text{const}
-    \end{align}
-    
-    We thus have
-    \begin{align}
-      \text{KL}(q(\x; \lambda^2 || p(\x))  & =  -2 \log \lambda + \lambda^2\left(\frac{1}{2\sigma_1^2}+\frac{1}{2\sigma_2^2}\right)+\text{const}
-    \end{align}    
-    
-  \end{solution}
-
-
-  
-\item Determine the value of $\lambda$ that minimises $J(\lambda) =
-  \KL(q(\x; \lambda^2) || p(\x))$. Interpret the result and
-  relate it to properties of the Kullback-Leibler
-  divergence.
-
-  \begin{solution}
-
-    Taking derivatives of $J(\lambda)$ with respect to $\lambda$ gives
-    \begin{align}
-      \frac{\partial J(\lambda)}{\partial \lambda} & = -\frac{2}{\lambda} + \lambda \left(\frac{1}{\sigma_1^2}+\frac{1}{\sigma_2^2}\right)
-      \end{align}
-    Setting it zero yields
-    \begin{align}
-      \frac{1}{\lambda^2} &= \frac{1}{2}\left(\frac{1}{\sigma_1^2}+\frac{1}{\sigma_2^2}\right)
-    \end{align}
-    so that
-    \begin{align}
-      \lambda^2 = 2 \frac{\sigma_1^2 \sigma_2^2}{\sigma_1^2+\sigma_2^2}
-    \end{align}
-    or
-    \begin{equation}
-    \lambda = \sqrt{2} \sqrt{\frac{\sigma_1^2 \sigma_2^2}{\sigma_1^2+\sigma_2^2}}
-    \end{equation}
-    This is a minimum because the second derivative of
-    $J(\lambda)$
-    \begin{equation}
-      \frac{\partial^2 J(\lambda)}{\partial \lambda^2} = \frac{2}{\lambda^2} + \left(\frac{1}{\sigma_1^2}+\frac{1}{\sigma_2^2}\right)
-    \end{equation}
-    is positive for all $\lambda > 0$.
-    
-    The result has an intuitive explanation: the optimal variance
-    $\lambda^2$ is the harmonic mean of the variances $\sigma_i^2$ of
-    the true posterior. In other words, the optimal precision
-    $1/\lambda^2$ is given by the average of the precisions
-    $1/\sigma_i^2$ of the two dimensions.
-
-    If the variances are not equal, e.g.\ if $\sigma_2^2 >
-    \sigma_1^2$, we see that the optimal variance of the variational
-    distribution strikes a compromise between two types of penalties
-    in the KL-divergence: the penalty of having a bad fit because the
-    variational distribution along dimension two is too narrow; and
-    along dimension one, the penalty for the variational distribution
-    to be nonzero when $p$ is small. 
-
-  \end{solution}
-  
-\end{exenumerate}
-
-
-% --------------------------------------------------------------- %
-\ex{EM algorithm for mixture models}
-\label{ex:EM-mixture-models}
-Mixture models are statistical models of the form
-\begin{equation}
-  p(\x; \thetab) = \sum_{k=1}^K \pi_k p_k(\x; \thetab_k)
-  \label{eq:mixture-model}
-\end{equation}
-where each $p_k(\x; \thetab_k)$ is itself a statistical model parameterised by
-$\thetab_k$ and the $\pi_k\ge 0$ are mixture weights that sum to one. The
-parameters $\thetab$ of the mixture model consist of the parameters $\thetab_k$
-of each mixture component and the mixture weights $\pi_k$, i.e.\ $\thetab =
-(\thetab_1, \ldots, \thetab_K, \pi_1, \ldots, \pi_K)$. An example is a mixture
-of Gaussians where each $p_k(\x; \thetab_k)$ is a Gaussian with parameters given
-by the mean vector $\mub_k$ and a covariance matrix $\Sigmab_k$.
-
-The mixture model in \eqref{eq:mixture-model} can be considered to be the
-marginal distribution of a latent variable model $p(\x, h; \thetab)$ where $h$
-is an unobserved variable that takes on values $1, \ldots, K$ and $p(h=k) =
-\pi_k$. Defining $p(\x|h=k; \thetab) = p_k(\x; \thetab_k)$, the latent variable
-model corresponding to \eqref{eq:mixture-model} thus is
-\begin{equation}
-  p(\x, h=k; \thetab) = p(\x|h=k; \thetab)p(h=k) = \pi_k p_k(\x; \thetab_k).
-  \label{eq:latent-var-model-long}
-\end{equation}
-In particular note that marginalising out $h$ gives $p(\x; \thetab)$ in
-\eqref{eq:mixture-model}.
-
-\begin{exenumerate}
-\item Verify that the latent variable model in \eqref{eq:latent-var-model-long} can be written as
-  \begin{equation}
-    p(\x, h; \thetab) = \prod_{k=1}^K \left[  \pi_k  p_k(\x; \thetab_k) \right]^{\ind(h=k)}
-    \label{eq:latent-var-model}
-  \end{equation}
-  where $h$ takes values in $1, \ldots, K$.
-  
-  \begin{solution}
-    Since $\ind(h=k)$ is one if $h=k$ and zero otherwise, we have
-    \begin{equation}
-      p(\x, h=j; \thetab) =  \prod_{k=1}^K \left[  \pi_k  p_k(\x; \thetab_k) \right]^{\ind(j=k)} = \pi_j p_j(\x ; \thetab_j)
-    \end{equation}
-    for any $j \in \{1, \ldots, K\}$, which matches
-    \eqref{eq:latent-var-model-long}.
-  \end{solution}
-
-\item Since the mixture model in \eqref{eq:mixture-model} can be seen as the
-  marginal of a latent-variable model, we can use the expectation maximisation
-  (EM) algorithm to estimate the parameters $\thetab$.
-
-  For a general model $p(\data,\h; \thetab)$ where $\data$ are the observed data
-  and $\h$ the corresponding unobserved variables, the EM algorithm iterates between
-  computing the expected complete-data log-likelihood $J^l(\thetab)$ and maximising
-  it with respect to $\thetab$: 
-  \begin{align}
-    \textbf{E-step at iteration l:}\quad J^l(\thetab) &= \E_{p(\h | \data; \thetab^l)} [ \log p(\data,\h; \thetab)]\\
-    \textbf{M-step at iteration l:}\quad \thetab^{l+1} &= \argmax_{\thetab} J^l(\thetab) 
-  \end{align}
-  Here $\thetab^l$ is the value of $\thetab$ in the $l$-th iteration. When
-  solving the optimisation problem, we also need to take into account
-  constraints on the parameters, e.g.\ that the $\pi_k$ correspond to a pmf.
-  
-  Assume that the data $\mathcal{D}$ consists of $n$ iid data points $\x_i$,
-  that each $\x_i$ has associated with it a scalar unobserved variable $h_i$,
-  and that the tuples $(\x_i, h_i)$ are all iid. What is $J^l(\thetab)$ under
-  these additional assumptions?
-  
-  \begin{solution}
-    Since the $(\x_i, h_i)$ are iid, we have that $p(\data,\h; \thetab) =
-    \prod_{i=1}^n p(\x_i, h_i; \thetab)$. Hence
-    \begin{align}
-      J^l\thetab) &= \E_{p(\h | \data; \thetab^l)} [ \log p(\data,\h; \thetab)]\\
-                  & = \E_{p(\h | \data; \thetab^l)}\left[ \sum_{i=1}^n \log  p(\x_i, h_i; \thetab)\right]\\
-                  & = \sum_{i=1}^n \E_{p(\h | \data; \thetab^l)}[ \log  p(\x_i, h_i; \thetab)]\\
-                  & =  \sum_{i=1}^n \E_{p(h_i | \data; \thetab^l)}[ \log  p(\x_i, h_i; \thetab)]\\
-                  & =  \sum_{i=1}^n \E_{p(h_i | \x_i; \thetab^l)}[ \log  p(\x_i, h_i; \thetab)] \label{eq:Jl-intermediate}
-    \end{align}
-    where in the second last step, we have used that each $\log p(\x_i, h_i;
-    \thetab)]$ only involves one latent variable $h_i$ so that we only need to
-    take the expectation over $p(h_i | \data; \thetab^l)$, and in the last step,
-    we have used that $h_i \independent \x_j$, for $j\neq i$.
-   
-  \end{solution}
-
-\item Show that for the latent variable model in \eqref{eq:latent-var-model},
-  $J^l(\thetab)$ equals
-  \begin{align}
-    J^l(\thetab) & = \sum_{i=1}^n  \sum_{k=1}^K w_{ik}^l  \log[  \pi_k  p_k(\x_i; \thetab_k) ],\label{eq:Jl-expression}\\
-     w_{ik}^l & =  \frac{ \pi^l_k p_k(\x_i; \thetab^l_k)}{ \sum_{k=1}^K \pi^l_k p_k(\x_i; \thetab^l_k)}\label{eq:w-def}
-  \end{align}
-  Note that the $w_{ik}^l$ are defined in terms of the parameters $\pi_k^l$ and
-  $\thetab_k^l$ from iteration $l$. They are equal to the conditional
-  probabilities $p(h=k|\x_i; \thetab^l)$, i.e.\ the probability that $\x_i$
-  has been sampled from component $p_k(\x_i; \thetab^l_k)$. 
-  
-  \begin{solution}
-    We consider a single term $ \E_{p(h| \x; \thetab^l)}[ \log p(\x, h;
-    \thetab)]$ in \eqref{eq:Jl-intermediate}.
-
-    Given the form of the model in \eqref{eq:latent-var-model}, we have that
-    \begin{align}
-      \log p(\x, h; \thetab) = \sum_{k=1}^K \ind(h=k) \log[  \pi_k  p_k(\x; \thetab_k) ]
-    \end{align}
-    and hence
-    \begin{align}
-      \E_{p(h| \x; \thetab^l)}[ \log p(\x, h; \thetab)] &=  \E_{p(h| \x; \thetab^l)}\left[ \sum_{k=1}^K \ind(h=k) \log[  \pi_k  p_k(\x; \thetab_k) ] \right]\\
-                                                        &=  \sum_{k=1}^K  \E_{p(h| \x; \thetab^l)}\left[ \ind(h=k) \right] \log[  \pi_k  p_k(\x; \thetab_k) ]\\
-                                                        & = \sum_{k=1}^K p(h=k|\x; \thetab^l)  \log[  \pi_k  p_k(\x; \thetab_k) ]
-    \end{align}
-    where we have used that the expectation over an indicator event equals the
-    probability for the event to happen, i.e.\ $\E_{p(h| \x; \thetab^l)}\left[
-      \ind(h=k) \right] =  p(h=k|\x; \thetab^l)$.
-    
-    The probability  $p(h=k|\x; \thetab^l)$ can be determined via the product
-    (Bayes') rule and Equations \eqref{eq:latent-var-model-long} and \eqref{eq:mixture-model}
-    \begin{align}
-      p(h=k|\x; \thetab^l) &= \frac{p(\x, h=k, \thetab^l)}{p(\x; \thetab^l)}\\
-                           & = \frac{ \pi^l_k p_k(\x; \thetab^l_k)}{ \sum_{k=1}^K \pi^l_k p_k(\x; \thetab^l_k)}
-                             \label{eq:posterior-def}
-    \end{align}
-    Note that the superscript $^l$ indicates that the $\pi_k^l$ are the mixture
-    weights and the $\thetab^l_k$ the model parameters from iteration $l$.
-
-    The objective $J^l(\thetab)$ sums over $n$ terms $ \E_{p(h| \x_i; \thetab^l)}[ \log p(\x_i, h;
-    \thetab)]$. Let us denote $p(h=k|\x_i; \thetab^l)$ from \eqref{eq:posterior-def} by $w_{ik}^l$ so that
-    \begin{equation}
-      \E_{p(h| \x_i; \thetab^l)}[ \log p(\x_i, h; \thetab)] =  \sum_{k=1}^K w_{ik}^l  \log[  \pi_k  p_k(\x; \thetab_k) ]
-    \end{equation}
-    and
-    \begin{align}
-      J^l(\thetab) & = \sum_{i=1}^n  \sum_{k=1}^K w_{ik}^l  \log[  \pi_k  p_k(\x_i; \thetab_k) ].
-    \end{align}
-    The objective $J^l(\thetab)$ takes the form of a weighted log-likelihood. In
-    more detail, since $\sum_k w_{ik}^l=1$ for all data points $\x_i$ (and
-    $w_{ik}^l\ge 0 $), $ \sum_{k=1}^K w_{ik}^l \log[ \pi_k p_k(\x_i; \thetab_k)
-    ]$ is a convex combination. This means that the different components of the
-    mixture model compete with each other: larger weights for some
-    components mean smaller weights for others. In the extreme case, some
-    components may contribute in a negligible way to the $i$-th term of the
-    log-likelihood.
-
-    The weights $w_{ik}^l$ are sometimes, in particular for mixture of
-    Gaussians, called ``soft-assignments'' because they specify to which extent
-    a data points $\x_i$ ``belongs'' to a mixture component $p_k$.
-    Alternatively, we can interpret the $w_{ik}^l$ to be the
-    ``responsibilities'' of each mixture component $p_k$ for a datapoint $\x_i$.
-
-    In some cases, e.g.\ for computational reasons, we may determine which of
-    the $K$ weights $w_{i1}^l, \ldots, w_{iK}^l$ is the largest and then set it
-    to one while setting the other weights to zero. This corresponds to
-    ``hard-assignments'' (and ``hard EM'') where a data point $\x_i$ is
-    exclusively assigned to a single mixture component $p_k$. 
-  \end{solution}
-
-\item Assume that the different mixture components $p_k(\x; \thetab_k), k=1,
-  \ldots, K$ do not share any parameters. Show that the updated parameter values
-  $\thetab_k^{l+1}$ are given by weighted maximum likelihood estimates.
-
-  \begin{solution}
-   We interchange the order of the summations in \eqref{eq:Jl-expression} so
-   that
-   \begin{align}
-     J^l(\thetab) & = \sum_{k=1}^K \sum_{i=1}^n  w_{ik}^l  \log[  \pi_k  p_k(\x_i; \thetab_k) ]\\
-                  & =  \sum_{k=1}^K\sum_{i=1}^n  w_{ik}^l\log \pi_k + \sum_{k=1}^K\underbrace{\sum_{i=1}^n  w_{ik}^l \log p_k(\x_i; \thetab_k)}_{\ell_k^l(\thetab_k)}
-                    \label{eq:Jl-interchanged}
-   \end{align}
-   When we update the parameters $\thetab_k$ of the mixture components, the
-   first term is a constant. The second term is a sum over weighted
-   log-likelihoods $\ell_k^l(\thetab_k)$, one for each mixture component. If the
-   mixture components do not share parameters, we thus have
-   \begin{equation}
-     \thetab_k^{l+1} =  \argmax_{\thetab_k}  J^l(\thetab) = \argmax_{\thetab_k} \ell_k^l(\thetab_k)
-   \end{equation}
-   This means that we can compute $\thetab_k^{l+1}$ as if we performed maximum
-   likelihood estimation for the model $p_k(\x; \thetab_k)$, expect that
-   the data points $\x_i$ are weighted by the $w_{ik}^l$.
-  \end{solution}
-
-\item Show that maximising $J^l(\thetab)$ with respect to the mixture weights
-  $\pi_k$ gives the update rule
-  \begin{align}
-    \pi_k^{l+1} &=  \frac{1}{n}\sum_{i=1}^n w_{ik}^l
-  \end{align}
-  \begin{solution}
-    We start with \eqref{eq:Jl-expression} and drop additive terms that do not
-    depend on the $\pi_k$. Since
-    \begin{align}
-      J^l(\thetab) & =  \sum_{i=1}^n  \sum_{k=1}^K w_{ik}^l  \log \pi_k + \text{terms not depending on the $\pi_k$}
-    \end{align}
-    we can focus on the objective
-    \begin{align}
-      J^l_\pi(\pi_1, \ldots, \pi_K) & = \sum_{i=1}^n  \sum_{k=1}^K w_{ik}^l  \log \pi_k\\ 
-      &= \sum_{k=1}^K \underbrace{\left( \sum_{i=1}^n w_{ik}^l \right)}_{\omega_k^l}  \log \pi_k \\
-                                        & =  \sum_{k=1}^K \omega_k^l \log \pi_k.
-    \end{align}
-    Taking into account that the $\pi_k = p(h=k)$ define a pmf, the optimisation problem to solve is
-    \begin{align}
-      \text{maximise} \quad&  \sum_{k=1}^K \omega_k^l \log \pi_k\\
-      \text{subject to}\quad &  \pi_k \ge 0 \\
-                     &  \sum_{k=1}^K \pi_k = 1 
-    \end{align}
-    The constrained optimisation problem could be solved via Lagrange
-    multipliers. But we here take another approach and solve the optimisation
-    problem by phrasing it in terms of a KL-divergence minimisation problem.
-
-    First, note that the $\pi_k$ that maximise $J^l_\pi(\pi_1, \ldots,
-    \pi_K)$ will also maximise the re-scaled objective
-    \begin{align}
-      \frac{1}{\sum_{k=1}^K \omega_k^l}  J_\pi^l(\pi_1, \ldots, \pi_K) & =  \frac{1}{\sum_{k=1}^K \omega_k^l}\sum_{k=1}^K \omega_k^l \log \pi_k\\
-                                                                          &=   \sum_{k=1}^K q_k^l \log \pi_k
-    \end{align}
-    where we introduced
-    \begin{equation}
-      q_k^l = \frac{\omega_k^l}{\sum_{k=1}^K \omega_{k}^l}.
-    \end{equation}
-    The $q_k^l$ are non-negative and sum to one. Hence, we can consider them to
-    define a pmf.
-
-    Second, note that the $\pi_k$ that maximise $J_\pi^l(\pi_1, \ldots,
-    \pi_K)$ will also maximise
-    \begin{align}
-      \sum_{k=1}^K q_k^l \log \pi_k - \sum_{k=1}^K q_k^l \log q_k^l & = \sum_{k=1}^K q_k^l\log \frac{\pi_k}{q_k^l}\\
-                                                                    & = -\sum_{k=1}^K q_k^l \log \frac{q_k^l}{\pi_k}\\
-                                                                    & = -\KL(q^l, \pi)
-    \end{align}
-    since adding constants does not change the solution. Hence, the
-    optimal $\pi_k$ are given by the pmf $\pi$ that minimises the KL-divergence
-    $\KL(q^l, \pi)$. This means that the optimal $\pi_k$ are
-    \begin{align}
-      \pi_k & = q_k^l= \frac{\omega_k^l}{\sum_{k=1}^K \omega_{k}^l} = \frac{\sum_{i=1}^n w_{ik}^l}{\sum_{k=1}^K \sum_{i=1}^n w_{ik}^l }.
-    \end{align}
-    The denominator can be simplified by noting that, with \eqref{eq:w-def},
-    $\sum_{k=1}^K w_{ik}^l=1$ so that
-    \begin{align}
-      \sum_{k=1}^K \sum_{i=1}^n w_{ik}^l = \sum_{i=1}^n \sum_{k=1}^K w_{ik}^l = n
-    \end{align}   
-    The requested update rule thus is
-    \begin{align}
-      \pi_k^{l+1} &=  \frac{1}{n}\sum_{i=1}^n w_{ik}^l
-    \end{align}
-    The update rule does not depend directly on the statistical model $p_k(\x;
-    \thetab_k)$ that we may choose for the mixture components. Their influence
-    occurs indirectly via the $w_{ik}^l$.
-  \end{solution}
-
-\item \label{ex:EM-mixture-models-summary} Summarise the EM-algorithm to learn the parameters $\thetab$ of the
-  mixture model in \eqref{eq:mixture-model} from iid data $\x_1, \ldots, \x_n$.
-
-  \begin{solution}
-    We collect and summarise the results from the previous questions:
-    \begin{itemize}
-    \item \textbf{E-step at iteration l:} Compute the posterior probabilities (soft assignments)
-      \begin{align}
-        w_{ik}^l & =  \frac{ \pi^l_k p_k(\x_i; \thetab^l_k)}{ \sum_{k=1}^K \pi^l_k p_k(\x_i; \thetab^l_k)} 
-      \end{align}
-      for all data points $\x_i$ and and mixture components $k$. Then formulate
-      the objective function $J^l(\thetab)$
-      \begin{align}
-        J^l(\thetab) & = \sum_{i=1}^n  \sum_{k=1}^K w_{ik}^l  \log[  \pi_k  p_k(\x_i; \thetab_k) ]
-      \end{align}
-    \item  \textbf{M-step at iteration l:} Compute the new mixture weights
-      \begin{align}
-        \pi_k^{l+1} &=  \frac{1}{n}\sum_{i=1}^n w_{ik}^l
-      \end{align}
-      To compute the new mixture parameters $\thetab_k^{l+1}$, maximise
-      $J^l(\thetab)$ if some parameters are shared or tied. If the $p_k(\x;
-      \thetab_k)$ do not share parameters, the new parameters $\thetab_k^{l+1}$
-      are obtained by maximising a weighted log-likelihood for each mixture
-      component separately:
-      \begin{align}
-         \thetab_k^{l+1} &= \argmax_{\thetab_k} \sum_{i=1}^n  w_{ik}^l \log p_k(\x_i; \thetab_k)
-      \end{align}
-      for $k=1, \ldots, K$.
-    \end{itemize}
-  \end{solution}
-    
-\end{exenumerate}
-
- 
-% --------------------------------------------------------------- %
-
-\ex{EM algorithm for mixture of Gaussians}
-\label{ex:EM-MoG}
-
-We here use the results from \exref{ex:EM-mixture-models} to derive the EM
-update rules for a mixture of Gaussians. This is a mixture model where each
-mixture component is a Gaussian distribution, i.e.
-\begin{align}
-  p(\x; \thetab) = \sum_{i=1}^K \pi_k \normal(\x; \mub_k, \Sigmab_k).
-\end{align}
-We consider the case where each $\mub_k$ and $\Sigmab_k$ can be individually
-changed (no tying of parameters). The overall parameters of the model are given
-by the $\mub_k, \Sigmab_k$ and the mixture weights $\pi_k\ge 0$, $k=1, \ldots
-K$. As in the case of general mixture models, the mixture weights sum to one.
-
-\begin{exenumerate}
-
-\item Determine the maximum likelihood estimates for a multivariate Gaussian
-  $\normal(\x; \mub, \Sigmab)$ for iid data $\data = (\x_1, \ldots, \x_n)$ when
-  each data point $\x_i$ has a weight $w_i$. The weights are non-negative but do
-  not necessarily sum to one.
-
-  \begin{solution}
- The weighted log-likelihood is
-    \begin{align}
-      \ell(\mub, \Sigmab) & = \sum_{i=1}^n w_i \log \normal(\x_i; \mub, \Sigmab)\\
-                          & =  \sum_{i=1}^n w_i \log |\det 2 \pi \Sigmab|^{-1/2} - \frac{1}{2} \sum_{i=1}^n w_i (\x_i-\mub)^\top\Sigmab^{-1}(\x_i-\mub)
-    \end{align}
-    Introducing the normalised weights $W_i = w_i/ \sum_{i=1}^n w_i$, we have
-    \begin{align}
-      \frac{1}{ \sum_{i=1}^n w_i} \ell(\mub, \Sigmab)  &=  \log |\det 2 \pi \Sigmab|^{-1/2} - \frac{1}{2} \sum_{i=1}^n W_i (\x_i-\mub)^\top\Sigmab^{-1}(\x_i-\mub)
-    \end{align}
-    Let us write out the quadratic term
-    \begin{align} 
-            (\x_i-\mub)^T\Sigmab^{-1}(\x_i-\mub) &= \x_i^\top\Sigmab^{-1}\x_i- 2\x_i^\top \Sigmab^{-1} \mub + \mub^\top \Sigmab^{-1} \mub
-    \end{align}
-    Hence
-    \begin{align}
-      \sum_{i=1}^n W_i (\x_i-\mub)^T\Sigmab^{-1}(\x_i-\mub) &= \sum_{i=1}^n W_i \x_i^\top\Sigmab^{-1}\x_i -  2 \sum_{i=1}^n W_i\x_i^\top \Sigmab^{-1} \mub +
-                                                             \underbrace{\sum_{i=1}^n W_i}_{=1}    \mub^\top \Sigmab^{-1} \mub  \\
-                                                            &= \tr\left[ \left( \sum_{i=1}^n W_i \x_i \x_i^\top \right) \Sigmab^{-1} \right]- 2 \left( \sum_{i=1}^n W_i\x_i  \right)^\top \Sigmab^{-1} \mub +  \mub^\top \Sigmab^{-1} \mub \\
-            &= \tr \left( \R \Sigmab^{-1}\right) -2 \b^\top \Sigmab^{-1}\mub +  \mub^\top\Sigmab^{-1} \mub
-    \end{align}
-    where $\R = \sum_{i=1}^n W_i \x_i \x_i^\top $ and $\b =  \sum_{i=1}^n
-    W_i\x_i$. Hence
-     \begin{align}
-             \frac{1}{ \sum_{i=1}^n w_i} \ell(\mub, \Sigmab)  &=  \log |\det 2 \pi \Sigmab|^{-1/2} - \frac{1}{2} \tr \left( \R \Sigmab^{-1}\right) + \b^\top \Sigmab^{-1}\mub - \frac{1}{2}  \mub^\top\Sigmab^{-1} \mub
-     \end{align}
-     This has exactly the same form as the unweighted likelihood function, just the
-     sufficient statistics $\R$ and $\b$ are computed using the weights. Hence,
-     the maximum likelihood estimates, when expressed in terms of $\R$ and $\b$
-     remain the same as in the unweighted case:
-     \begin{align}
-       \hat{\mub} & = \b  =  \sum_{i=1}^n W_i\x_i\\
-       \hat{\Sigmab} & = \R - \b\b^\top=  \sum_{i=1}^n W_i \x_i \x_i^\top - \b\b^\top
-     \end{align}
-     Moreover, since
-     \begin{align}
-       \sum_{i=1}^n W_i (\x_i-\b)(\x_i-\b)^\top  & =  \sum_{i=1}^n W_i \x_i \x_i^\top - \underbrace{\sum_{i=1}^n W_i \x_i}_{\b} \b^\top - \b \underbrace{\sum_{i=1}^n W_i \x_i^\top}_{\b^\top} + \b\b^\top\\
-                                                 &=\R - \b \b^\top - \b \b^\top + \b\b^\top\\
-                                                 & =  \R - \b\b^\top
-     \end{align}
-     we find that the weighted maximum likelihood estimates are the weighted
-     average and weighted covariance matrix:
-     \begin{align}
-       \hat{\mub} & =   \sum_{i=1}^n W_i\x_i&  \hat{\Sigmab} &=    \sum_{i=1}^n W_i (\x_i-\hat{\mub})(\x_i-\hat{\mub})^\top & W_i&= \frac{w_i}{\sum_{i=1}^n w_i}
-     \end{align}
-  \end{solution}
-
-  \item Use the results from  \exref{ex:EM-mixture-models} to derive the EM update
-    rules for the parameters of the Gaussian mixture model.
-
-    \begin{solution}
-      From the solution to \exref{ex:EM-mixture-models}\ref{ex:EM-mixture-models-summary} and the derived
-      weighted MLE solutions, we find:
-      \begin{itemize}
-      \item \textbf{E-step at iteration l:} Compute the posterior probabilities (soft assignments)
-        \begin{align}
-          w_{ik}^l & =  \frac{ \pi^l_k \normal(\x_i; \mub^l_k, \Sigmab_k^l)}{ \sum_{k=1}^K\pi^l_k \normal(\x_i; \mub^l_k, \Sigmab_k^l) } 
-      \end{align}
-      for all data points $\x_i$ and and mixture components $k$.
-    \item  \textbf{M-step at iteration l:}
-      \begin{itemize}
-      \item Determine the weighted MLEs
-        \begin{align}
-          \mub_k^{l+1} & =   \sum_{i=1}^n W^l_{ik}\x_i&  \Sigmab_k^{l+1} &=    \sum_{i=1}^n W^l_{ik} (\x_i- \mub_k^{l+1})(\x_i- \mub_k^{l+1})^\top
         \end{align}
-        where $W^l_{ik} = w_{ik}^l/(\sum_{i=1}^n w_{ik}^l)$.
-      \item Compute the new mixture weights
-      \begin{align}
-        \pi_k^{l+1} &=  \frac{1}{n}\sum_{i=1}^n w_{ik}^l
-      \end{align}
-    \end{itemize}
-  \end{itemize}
-  
-      
+        Portanto
+        \begin{equation}
+            \argmax_{q_1(y_1|\x)} \ELBOx(q) = \argmin_{q_1(y_1|\x)} \KL(q_1(y_1|\x) || \bar{p}(y_1|\x))
+        \end{equation}
+        
     \end{solution}
-      
+    
+    \item Conclua que, dados $q_i(y_i|\x)$, $i=2, \ldots, d$, o $q_1(y_1|\x)$ \'otimo \'e igual a $\bar{p}(y_1|\x)$.
+    
+    Isso ent\~ao leva a um esquema de atualiza\'c\~ao iterativo onde alternamos
+    pelas diferentes dimens\~oes, cada vez atualizando a margimal variacional correspondente de acordo com:
+    \begin{align}
+        q_i(y_i|\x) &=  \bar{p}(y_i|\x), &  \bar{p}(y_i|\x) &= \frac{1}{Z} \exp\left[ \E_{q(\y_{\setminus i}|\x)}\left[ \log p(\x,\y)\right] \right]
+    \end{align}
+    onde $q(\y_{\setminus i}|\x) = \prod_{j \neq i} q(y_j | \x)$ \'e o produto de todas as marginais exceto a marginal $q_i(y_i|\x)$.
+    
+    \begin{solution}
+        Isso segue imediatamente do fato de que a diverg\^encia KL \'e
+        minimizada quando $q_1(y_1|\x) = \bar{p}(y_1|\x)$. Nota lateral: O
+        regra de atualiza\'c\~ao iterativa pode ser considerada uma otimiza\'c\~ao por
+        ascens\~ao de coordenadas no espa\'co de fun\'c\~oes, onde cada ``coordenada''
+        corresponde a um $q_i(y_i|\x)$.
+        
+    \end{solution}
 \end{exenumerate}
- 
+
+% --------------------------------------------------
+
+\ex{Infer\^encia variacional de campo m\'edio II}
+Assuma que as vari\'aveis aleat\'orias $y_1, y_2, x$ sejam geradas de acordo com o seguinte processo
+\begin{align}
+    y_1 &\sim \Gauss(y_1; 0, 1) &   y_2 &\sim \Gauss(y_2; 0, 1) \\
+    n &\sim \Gauss(n; 0, 1)    &    x & = y_1+y_2+n & 
+\end{align}
+onde $y_1, y_2, n$ s\~ao estatisticamente independentes.
+
+\begin{exenumerate}
+    
+    \item $y_1, y_2, x$ s\~ao conjuntamente Gaussianas. Determine sua m\'edia e sua
+    matriz de covari\^ancia.
+    
+    \begin{solution}
+        
+        O valor esperado de $y_1$ e $y_2$ \'e zero. Pela linearidade da
+        esperan\'ca, o valor esperado de $x$ \'e
+        \begin{equation}
+            \E(x) = \E(y_1) + \E(y_2) + \E(n) = 0
+        \end{equation}
+        A vari\^ancia de $y_1$ e $y_2$ \'e 1. Como $y_1, y_2, n$ s\~ao estatisticamente independentes,
+        \begin{equation}
+            \Var(x) = \Var(y_1) + \Var(y_2) + \Var(n) = 1 + 1 + 1 = 3.
+        \end{equation}
+        A covari\^ancia entre $y_1$ e $x$ \'e
+        \begin{align}
+            \text{cov}(y_1, x) &= \E( (y_1-\E(y_1))(x-\E(x))) = \E( y_1 x) \\
+            &= \E( y_1(y_1+y_2+n) ) = \E(y_1^2) + \E(y_1 y_2) + \E(y_1 n)\\
+            &= 1 +  \E(y_1)\E(y_2) + \E(y_1)\E(n)\\
+            &= 1 + 0 + 0
+        \end{align}
+        onde usamos que $y_1$ e $x$ possuem m\'edia zero e as hip\'oteses de independ\^encia.
+        
+        A covari\^ancia entre $y_2$ e $x$ \'e computada da mesma forma e tamb\'em \'e igual a 1.
+        
+        Obtemos assim a matriz de covari\^ancia $\Sigmab$,
+        \begin{equation}
+            \Sigmab = \begin{pmatrix}
+                1 & 0 & 1\\
+                0 & 1 & 1\\
+                1 & 1 & 3
+            \end{pmatrix}
+        \end{equation}
+        
+    \end{solution}
+    
+    \item A condicional $p(y_1, y_2 | x)$ \'e Gaussiana com m\'edia $\m$ e covari\^ancia $\C$,
+    \begin{align}
+        \m &= \frac{x}{3} \begin{pmatrix}
+            1\\
+            1
+        \end{pmatrix}
+        &
+        \C & = \frac{1}{3} \begin{pmatrix}
+            2 &-1 \\
+            -1 & 2
+        \end{pmatrix}
+    \end{align}
+    Como $x$ \'e a soma de tr\^es vari\'aveis aleat\'orias que possuem a
+    mesma distribui\'c\~ao, faz sentido intuitivo que a m\'edia atribua
+    $1/3$ do valor observado de $x$ para $y_1$ e $y_2$. Al\'em disso,
+    $y_1$ e $y_2$ s\~ao negativamente correlacionadas, pois um aumento em $y_1$
+    deve ser compensado com uma diminui\'c\~ao em $y_2$.
+    
+    Vamos agora aproximar a posterior $p(y_1, y_2 | x)$ com infer\^encia variacional
+    de campo m\'edio. Determine a distribui\'c\~ao variacional \'otima usando o m\'etodo e os resultados do \exref{ex:MFVI-I}. Voc\^e pode usar que
+    \begin{align}
+        p(y_1, y_2, x) &= \Gauss\left( (y_1, y_2, x); \zerob, \Sigmab \right) &  \Sigmab &= \begin{pmatrix} 
+            1 & 0 & 1\\
+            0 & 1 & 1\\
+            1 & 1 & 3
+        \end{pmatrix}
+        &
+        \Sigmab^{-1} &= \begin{pmatrix} 
+            2 & 1 & -1\\
+            1 & 2 & -1\\
+            -1 & -1 & 1
+        \end{pmatrix}
+    \end{align}
+    
+    \begin{solution}
+        A hip\'otese de campo m\'edio significa que a distribui\'c\~ao variacional \'e assumida como fatoriz\'avel como
+        \begin{equation}
+            q(y_1, y_2 | x) = q_1(y_1 | x) q_2(y_2 | x)
+        \end{equation}
+        Do \exref{ex:MFVI-I}, as $q_1(y_1|x)$ e $q_2(y_2|x)$ \'otimas satisfazem
+        \begin{align}
+            q_1(y_1|x) &=  \bar{p}(y_1|x), &  \bar{p}(y_1|x) &= \frac{1}{Z} \exp\left[ \E_{q_2(y_2|x)}\left[ \log p(y_1, y_2, x)\right] \right]\\
+            q_2(y_2|x) &=  \bar{p}(y_2|x), &  \bar{p}(y_2|x) &= \frac{1}{Z} \exp\left[ \E_{q_1(y_1|x)}\left[ \log p(y_1, y_2, x)\right] \right]
+        \end{align}
+        Note que estas s\~ao equa\'c\~oes acopladas: $q_2$ aparece na
+        equa\'c\~ao para $q_1$ via $\bar{p}(y_1|x)$, e $q_1$ aparece na
+        equa\'c\~ao para $q_2$ via $\bar{p}(y_2|x)$. Mas temos duas
+        equa\'c\~oes para duas inc\'ognitas, que para o modelo conjunto Gaussiano
+        $p(x, y_1, y_2)$ podem ser resolvidas em forma fechada.
+        
+        Dada a equa\'c\~ao fornecida para $p(y_1, y_2, x)$, temos que
+        \begin{align}
+            \log p(y_1, y_2, x) & = -\frac{1}{2} \begin{pmatrix}
+                y_1\\
+                y_2\\
+                x
+            \end{pmatrix}^\top
+            \begin{pmatrix}
+                2 & 1 & -1\\
+                1 & 2 & -1\\
+                -1 & -1 & 1
+            \end{pmatrix}
+            \begin{pmatrix}
+                y_1\\
+                y_2\\
+                x
+            \end{pmatrix} + \text{const}\\
+            & = -\frac{1}{2} \left( 2 y_1^2 + 2 y_2^2 + x^2 + 2 y_1 y_2 - 2 y_1 x - 2y_2 x \right) + \text{const}
+        \end{align}
+        
+        Vamos come\'car com a equa\'c\~ao para $\bar{p}(y_1|x)$. \'E mais f\'acil trabalhar no dom\'inio logar\'itmico, onde obtemos:
+        \begin{align}
+            \log  \bar{p}(y_1|x) & =  \E_{q_2(y_2|x)}\left[ \log p(y_1, y_2, x)\right] + \text{const}\\
+            & = -\frac{1}{2} \E_{q_2(y_2|x)}\left[  2 y_1^2 + 2 y_2^2 + x^2 + 2 y_1 y_2 - 2 y_1 x - 2y_2 x \right] + \text{const}\\
+            & = -\frac{1}{2} \left(2 y_1^2 + 2 y_1 \E_{q_2(y_2|x)}[y_2] - 2 y_1 x \right) + \text{const}\\
+            & = -\frac{1}{2} \left( 2 y_1^2 + 2y_1 m_2 - 2 y_1 x \right) + \text{const}\\
+            & = -\frac{1}{2} \left( 2 y_1^2 - 2 y_1 (x-m_2) \right) + \text{const}
+            \label{eq:barp1-alt}
+        \end{align}
+        onde absorvemos todos os termos que n\~ao envolvem $y_1$ na constante. Al\'em disso, definimos $\E_{q_2(y_2|x)}[y_2]=m_2$.
+        
+        Note que uma densidade Gaussiana arbitr\'aria $\Gauss(y; m, \sigma^2)$
+        com m\'edia $m$ e vari\^ancia $\sigma^2$ pode ser escrita no
+        dom\'inio logar\'itmico como
+        \begin{align}
+            \log \Gauss(y; m, \sigma^2) & = -\frac{1}{2}\frac{(y-m)^2}{\sigma^2} + \text{const}\\
+            & = -\frac{1}{2} \left( \frac{y^2}{\sigma^2} -2y \frac{m}{\sigma^2} \right) + \text{const}
+            \label{eq:loggauss-alt}
+        \end{align}
+        A compara\'c\~ao com \eqref{eq:barp1-alt} mostra que $\bar{p}(y_1|x)$, e
+        portanto $q_1(y_1 | x)$, \'e Gaussiana com vari\^ancia e m\'edia iguais a
+        \begin{align}
+            \sigma_1^2 &= \frac{1}{2} & m_1 & = \frac{1}{2}(x-m_2)
+        \end{align}
+        Note que n\~ao fizemos uma hip\'otese de Gaussianidade sobre $q_1(y_1 |
+        x)$. A $q_1(y_1 | x)$ \'otima acaba sendo Gaussiana porque
+        o modelo $p(y_1, y_2, x)$ \'e Gaussiano.
+        
+        A equa\'c\~ao para $\bar{p}(y_2|x)$ fornece analogamente
+        \begin{align}
+            \log  \bar{p}(y_2|x) & =  \E_{q_1(y_1|x)}\left[ \log p(y_1, y_2, x)\right] + \text{const}\\
+            & = -\frac{1}{2} \E_{q_1(y_1|x)}\left[  2 y_1^2 + 2 y_2^2 + x^2 + 2 y_1 y_2 - 2 y_1 x - 2y_2 x \right] + \text{const}\\
+            & = -\frac{1}{2} \left(2 y_2^2 + 2 \E_{q_1(y_1|x)}[y_1] y_2 - 2y_2 x \right) + \text{const}\\
+            & = -\frac{1}{2} \left(2 y_2^2 + 2 m_1 y_2 - 2 y_2 x \right) + \text{const}\\
+            & = -\frac{1}{2} \left(2 y_2^2 - 2 y_2(x-m_1) \right) + \text{const}
+            \label{eq:barp2-alt}
+        \end{align}
+        onde absorvemos todos os termos que n\~ao envolvem $y_2$ na
+        constante. Al\'em disso, definimos $\E_{q_1(y_1|x)}[y_1]=m_1$. Com
+        \eqref{eq:loggauss-alt}, isso define uma distribui\'c\~ao Gaussiana com 
+        vari\^ancia e m\'edia iguais a
+        \begin{align}
+            \sigma_2^2 &= \frac{1}{2} & m_2 & = \frac{1}{2}(x-m_1)
+        \end{align}
+        Portanto, as distribui\'c\~oes variacionais marginais \'otimas $q_1(y_1|x)$ e
+        $q_2(y_2|x)$ s\~ao ambas Gaussianas com vari\^ancia igual a $1/2$. Suas
+        m\'edias satisfazem
+        \begin{align}
+            m_1 & = \frac{1}{2}(x-m_2) & m_2  & = \frac{1}{2}(x-m_1)
+        \end{align}
+        Estas s\~ao duas equa\'c\~oes para duas inc\'ognitas. Podemos resolv\^e-las da seguinte forma   
+        \begin{align}
+            2 m_1 &= x - m_2 \\
+            & = x -\frac{1}{2}(x-m_1)\\
+            4 m_1 & = 2 x -x + m_1 \\
+            3 m_1 & = x\\
+            m_1 & = \frac{1}{3} x
+        \end{align}
+        Logo
+        \begin{equation}
+            m_2 = \frac{1}{2} x - \frac{1}{6} x = \frac{2}{6} x = \frac{1}{3} x
+        \end{equation}
+        Em resumo, encontramos
+        \begin{align}
+            q_1(y_1 | x) & = \Gauss\left(y_1; \frac{x}{3}, \frac{1}{2}\right) &  q_2(y_2 | x) & = \Gauss\left(y_2; \frac{x}{3}, \frac{1}{2}\right)
+        \end{align}
+        e a distribui\'c\~ao variacional \'otima $q(y_1, y_2|x) =
+        q_1(y_1|x) q_2(y_2|x)$ \'e Gaussiana. Fizemos a hip\'otese de campo m\'edio
+        (independ\^encia), mas n\~ao a hip\'otese de Gaussianidade. A Gaussianidade
+        da distribui\'c\~ao variacional \'e uma consequ\^encia da Gaussianidade
+        do modelo $p(y_1, y_2, x)$.
+        
+        A compara\'c\~ao com a posterior real mostra que a distribui\'c\~ao variacional
+        de campo m\'edio $q(y_1, y_2 | x)$ possui a mesma m\'edia, mas
+        ignora a correla\'c\~ao e subestima as vari\^ancias marginais. A posterior real
+        e a aproxima\'c\~ao de campo m\'edio s\~ao mostradas na Figura \ref{fig:meanfield-alt}.
+        
+        \begin{figure}[h!]
+            \centering
+            \includegraphics[width=0.75\textwidth]{meanfield}
+            \caption{\label{fig:meanfield-alt}Em azul: posterior real correlacionada. Em vermelho: aproxima\'c\~ao de campo m\'edio.}
+        \end{figure}
+    \end{solution}
+    
+    
+    
+\end{exenumerate}
+% --------------------------------------------------
+\ex{Aproxima\'c\~ao variacional da posterior I}
+
+Vimos que maximizar o limite inferior da evid\^encia (ELBO) em
+rela\'c\~ao \`a distribui\'c\~ao variacional $q$ minimiza a
+diverg\^encia Kullback-Leibler para a posterior real $p$. Aqui assumimos
+que $q$ e $p$ s\~ao fun\'c\~oes de densidade de probabilidade, de modo que a
+diverg\^encia Kullback-Leibler entre elas \'e definida como
+\begin{equation}
+    \KL(q || p) = \int q(\x) \log \frac{q(\x)}{p(\x)} \ud \x = \E_q \left[\log \frac{q(\x)}{p(\x)}\right].
+\end{equation}
+
+
+
+\begin{exenumerate}
+    
+    \item Voc\^e pode assumir aqui que $\x$ \'e unidimensional, de modo que $p$
+    e $q$ sejam densidades univariadas. Considere o caso em que $p$ \'e
+    uma densidade bimodal, mas as densidades variacionais $q$ s\~ao
+    unimodais. Esbo\'ce uma figura que mostre $p$ e uma distribui\'c\~ao
+    variacional $q$ que foi aprendida minimizando $\KL(q || p)$. Explique qualitativamente por que a $q$ esbo\'cada minimiza
+    $\KL(q || p)$.
+    
+    \begin{solution}
+        
+        Um poss\'ivel esbo\'co \'e mostrado na figura abaixo.
+        
+        \begin{figure}[h!]
+            \centering
+            \includegraphics[width = 0.5 \textwidth]{KL-asym}
+        \end{figure}
+        
+        Explica\'c\~ao: Podemos dividir o dom\'inio de $p$ e $q$ nas áreas
+        onde $p$ \'e pequena (zero) e naquelas onde $p$ possui massa significativa.
+        Como o objetivo apresenta $q$ no numerador enquanto $p$ est\'a
+        no denominador, uma $q$ \'otima precisa ser zero onde $p$ \'e
+        zero. Caso contr\'ario, incorreria em uma grande penalidade (divis\~ao por
+        zero). Como tomamos a esperan\'ca em rela\'c\~ao a $q$, no entanto,
+        regi\~oes onde $p>0$ n\~ao precisam ser cobertas por $q$; deix\'a-las
+        de fora n\~ao incorre em penalidade. Portanto, as $q$ unimodais \'otimas
+        cobrem apenas um pico da bimodal $p$.
+        
+    \end{solution}
+    
+    
+    \item Assuma que a posterior real $p(\x) = p(x_1, x_2)$ se fatorize em duas Gaussianas de m\'edia zero e vari\^ancias $\sigma_1^2$ e $\sigma_2^2$,
+    \begin{equation}
+        p(x_1,x_2) = \frac{1}{\sqrt{2\pi \sigma_1^2}} \exp\left[-\frac{x_1^2}{2 \sigma_1^2}\right]\frac{1}{\sqrt{2\pi \sigma_2^2}} \exp\left[-\frac{x_2^2}{2 \sigma_2^2}\right].
+    \end{equation}
+    Assuma ainda que a densidade variacional $q(x_1,x_2; \lambda^2)$ seja parametrizada como
+    \begin{equation}
+        q(x_1,x_2;\lambda^2) = \frac{1}{2\pi \lambda^2} \exp\left[-\frac{x_1^2+x_2^2}{2 \lambda^2}\right]
+    \end{equation}
+    onde $\lambda^2$ \'e o par\^ametro variacional que \'e aprendido
+    minimizando $\KL(q || p)$. Se $\sigma^2_2$ for muito
+    maior que $\sigma^2_1$, voc\^e espera que $\lambda^2$ esteja mais pr\'oximo de $\sigma_2^2$
+    ou de $\sigma_1^2$? Forne\'ca uma explica\'c\~ao.
+    
+    \begin{solution}
+        O par\^ametro variacional aprendido estar\'a mais pr\'oximo de $\sigma_1^2$
+        (a menor das duas $\sigma_i^2$).
+        
+        Explica\'c\~ao: Primeiro, note que as $\sigma_i^2$ s\~ao as vari\^ancias
+        ao longo dos dois eixos diferentes, e que $\lambda^2$ \'e a vari\^ancia
+        \'unica para ambos $x_1$ e $x_2$. O objetivo penaliza $q$ se ela
+        for n\~ao nula onde $p$ \'e pequena (veja acima). O par\^ametro variacional
+        $\lambda^2$ ser\'a assim ajustado durante o aprendizado para que a vari\^ancia
+        de $q$ esteja pr\'oxima da menor das duas $\sigma_i^2$.
+        
+    \end{solution}
+    
+\end{exenumerate}
+
+% --------------------------------------------------
+
+\ex{Aproxima\'c\~ao variacional da posterior II}
+
+Vimos que maximizar o limite inferior da evid\^encia (ELBO) em
+rela\'c\~ao \`a distribui\'c\~ao variacional minimiza a
+diverg\^encia Kullback-Leibler para a posterior real. Investigamos aqui
+a natureza da aproxima\'c\~ao se a fam\'ilia de distribui\'c\~oes
+variacionais n\~ao incluir a posterior real.
+
+\begin{exenumerate}
+    
+    \item Assuma que a posterior real para $\x = (x_1, x_2)$ seja dada por
+    \begin{equation}
+        p(\x) = \normal(x_1 ; \sigma_1^2)\normal(x_2 ; \sigma_2^2) 
+    \end{equation}
+    e que nossa distribui\'c\~ao variacional $q(\x; \lambda^2)$ seja
+    \begin{equation}
+        q(\x; \lambda^2) = \normal(x_1 ; \lambda^2)\normal(x_2 ; \lambda^2),
+    \end{equation}
+    onde $\lambda > 0$ \'e o par\^ametro variacional. Forne\'ca uma
+    equa\'c\~ao para
+    \begin{equation}
+        J(\lambda) = \KL(q(\x; \lambda^2) || p(\x)),
+    \end{equation}
+    onde voc\^e pode omitir termos aditivos que n\~ao dependam de $\lambda$. 
+    
+    \begin{solution}
+        
+        Escrevemos
+        \begin{align}
+            \KL(q(\x; \lambda^2) || p(\x)) & = \E_q \left[ \log  \frac{q(\x; \lambda^2)}{p(\x)} \right]\\
+            & = \E_q \log q(\x; \lambda^2) - \E_q \log p(\x)\\
+            & = \E_q \log  \normal(x_1 ; \lambda^2) + \E_q \log \normal(x_2 ; \lambda^2) \nonumber \\
+            & \phantom{=} - \E_q \log \normal(x_1 ; \sigma_1^2) - \E_q \log \normal(x_2 ; \sigma_2^2)
+        \end{align}
+        
+        Temos ainda
+        \begin{align}
+            \E_q \log  \normal(x_i ; \lambda^2) & = \E_q \log \left[ \frac{1}{\sqrt{2\pi \lambda^2}} \exp \left[-\frac{x_i^2}{2 \lambda^2} \right] \right]\\
+            & = \log \left[ \frac{1}{\sqrt{2\pi \lambda^2}}\right] -\E_q \left[\frac{x_i^2}{2 \lambda^2}\right]\\
+            & = -\log \lambda - \frac{\lambda^2}{2\lambda^2} + \text{const}\\
+            & = -\log \lambda - \frac{1}{2} + \text{const}\\
+            & = -\log \lambda + \text{const}
+        \end{align}
+        onde usamos que, para $x_i$ de m\'edia zero, $\E_q [x_i^2] = \var(x_i) = \lambda^2$. 
+        
+        Similarmente obtemos
+        \begin{align}
+            \E_q \log \normal(x_i ; \sigma_i^2) & = \E_q \log \left[ \frac{1}{\sqrt{2\pi \sigma_i^2}} \exp \left[-\frac{x_i^2}{2 \sigma_i^2} \right] \right]\\
+            & = \log \left[ \frac{1}{\sqrt{2\pi \sigma_i^2}}\right] -\E_q \left[\frac{x_i^2}{2 \sigma_i^2}\right]\\
+            & = -\log \sigma_i - \frac{\lambda^2}{2\sigma_i^2} + \text{const}\\
+            & = - \frac{\lambda^2}{2\sigma_i^2} + \text{const}
+        \end{align}
+        
+        Temos assim
+        \begin{align}
+            \KL(q(\x; \lambda^2 || p(\x))  & =  -2 \log \lambda + \lambda^2\left(\frac{1}{2\sigma_1^2}+\frac{1}{2\sigma_2^2}\right)+\text{const}
+        \end{align}     
+        
+    \end{solution}
+    
+    
+    
+    \item Determine o valor de $\lambda$ que minimiza $J(\lambda) =
+    \KL(q(\x; \lambda^2) || p(\x))$. Interprete o resultado e
+    relacione-o com propriedades da diverg\^encia Kullback-Leibler.
+    
+    \begin{solution}
+        
+        Tomando as derivadas de $J(\lambda)$ em rela\'c\~ao a $\lambda$, obtemos
+        \begin{align}
+            \frac{\partial J(\lambda)}{\partial \lambda} & = -\frac{2}{\lambda} + \lambda \left(\frac{1}{\sigma_1^2}+\frac{1}{\sigma_2^2}\right)
+        \end{align}
+        Igualando a zero, resulta em
+        \begin{align}
+            \frac{1}{\lambda^2} &= \frac{1}{2}\left(\frac{1}{\sigma_1^2}+\frac{1}{\sigma_2^2}\right)
+        \end{align}
+        de modo que
+        \begin{align}
+            \lambda^2 = 2 \frac{\sigma_1^2 \sigma_2^2}{\sigma_1^2+\sigma_2^2}
+        \end{align}
+        ou
+        \begin{equation}
+            \lambda = \sqrt{2} \sqrt{\frac{\sigma_1^2 \sigma_2^2}{\sigma_1^2+\sigma_2^2}}
+        \end{equation}
+        Este \'e um m\'inimo porque a segunda derivada de $J(\lambda)$
+        \begin{equation}
+            \frac{\partial^2 J(\lambda)}{\partial \lambda^2} = \frac{2}{\lambda^2} + \left(\frac{1}{\sigma_1^2}+\frac{1}{\sigma_2^2}\right)
+        \end{equation}
+        \'e positiva para todo $\lambda > 0$.
+        
+        O resultado possui uma explica\'c\~ao intuitiva: a vari\^ancia \'otima
+        $\lambda^2$ \'e a m\'edia harm\^onica das vari\^ancias $\sigma_i^2$ da
+        posterior real. Em outras palavras, a precis\~ao \'otima
+        $1/\lambda^2$ \'e dada pela m\'edia das precis\~oes
+        $1/\sigma_i^2$ das duas dimens\~oes.
+        
+        Se as vari\^ancias n\~ao forem iguais, por exemplo, se $\sigma_2^2 >
+        \sigma_1^2$, vemos que a vari\^ancia \'otima da distribui\'c\~ao variacional
+        estabelece um compromisso entre dois tipos de penalidades na diverg\^encia KL: a penalidade de ter um ajuste ruim porque a
+        distribui\'c\~ao variacional ao longo da dimens\~ao dois \'e muito estreita; e, ao longo da dimens\~ao um, a penalidade para a distribui\'c\~ao variacional ser diferente de zero quando $p$ \'e pequena. 
+        
+    \end{solution}
+    
+\end{exenumerate}
+
+
+% --------------------------------------------------------------- %
+\ex{Algoritmo EM para modelos de mistura}
+\label{ex:EM-mixture-models-alt}
+Modelos de mistura s\~ao modelos estat\'isticos da forma
+\begin{equation}
+    p(\x; \thetab) = \sum_{k=1}^K \pi_k p_k(\x; \thetab_k)
+    \label{eq:mixture-model-alt}
+\end{equation}
+onde cada $p_k(\x; \thetab_k)$ \'e em si um modelo estat\'istico parametrizado por
+$\thetab_k$ e os $\pi_k \ge 0$ s\~ao pesos de mistura que somam um. Os
+par\^ametros $\thetab$ do modelo de mistura consistem nos par\^ametros $\thetab_k$
+de cada componente de mistura e nos pesos de mistura $\pi_k$, isto \'e, $\thetab =
+(\thetab_1, \ldots, \thetab_K, \pi_1, \ldots, \pi_K)$. Um exemplo \'e uma mistura
+de Gaussianas onde cada $p_k(\x; \thetab_k)$ \'e uma Gaussiana com par\^ametros dados
+pelo vetor de m\'edia $\mub_k$ e uma matriz de covari\^ancia $\Sigmab_k$.
+
+O modelo de mistura em \eqref{eq:mixture-model-alt} pode ser considerado a
+distribui\'c\~ao marginal de um modelo de vari\'avel latente $p(\x, h; \thetab)$ onde $h$
+\'e uma vari\'avel n\~ao observada que assume valores $1, \ldots, K$ e $p(h=k) =
+\pi_k$. Definindo $p(\x|h=k; \thetab) = p_k(\x; \thetab_k)$, o modelo de vari\'avel
+latente correspondente a \eqref{eq:mixture-model-alt} \'e, portanto,
+\begin{equation}
+    p(\x, h=k; \thetab) = p(\x|h=k; \thetab)p(h=k) = \pi_k p_k(\x; \thetab_k).
+    \label{eq:latent-var-model-long-alt}
+\end{equation}
+Em particular, note que marginalizar $h$ fornece $p(\x; \thetab)$ em
+\eqref{eq:mixture-model-alt}.
+
+
+
+\begin{exenumerate}
+    \item Verifique que o modelo de vari\'avel latente em \eqref{eq:latent-var-model-long-alt} pode ser escrito como
+    \begin{equation}
+        p(\x, h; \thetab) = \prod_{k=1}^K \left[  \pi_k  p_k(\x; \thetab_k) \right]^{\ind(h=k)}
+        \label{eq:latent-var-model-alt}
+    \end{equation}
+    onde $h$ assume valores em $1, \ldots, K$.
+    
+    \begin{solution}
+        Como $\ind(h=k)$ \'e um se $h=k$ e zero caso contr\'ario, temos
+        \begin{equation}
+            p(\x, h=j; \thetab) =  \prod_{k=1}^K \left[  \pi_k  p_k(\x; \thetab_k) \right]^{\ind(j=k)} = \pi_j p_j(\x ; \thetab_j)
+        \end{equation}
+        para qualquer $j \in \{1, \ldots, K\}$, o que coincide com
+        \eqref{eq:latent-var-model-long-alt}.
+    \end{solution}
+    
+    \item Como o modelo de mistura em \eqref{eq:mixture-model-alt} pode ser visto como a
+    marginal de um modelo de vari\'avel latente, podemos usar o algoritmo de esperan\'ca e maximiza\'c\~ao
+    (EM) para estimar os par\^ametros $\thetab$.
+    
+    Para um modelo geral $p(\data,\h; \thetab)$ onde $\data$ s\~ao os dados observados
+    e $\h$ as vari\'aveis n\~ao observadas correspondentes, o algoritmo EM itera entre
+    computar a esperan\'ca da log-verossimilhan\'ca de dados completos $J^l(\thetab)$ e maximiz\'a-la em rela\'c\~ao a $\thetab$: 
+    \begin{align}
+        \textbf{Passo E na itera\'c\~ao l:}\quad J^l(\thetab) &= \E_{p(\h | \data; \thetab^l)} [ \log p(\data,\h; \thetab)]\\
+        \textbf{Passo M na itera\'c\~ao l:}\quad \thetab^{l+1} &= \argmax_{\thetab} J^l(\thetab) 
+    \end{align}
+    Aqui $\thetab^l$ \'e o valor de $\thetab$ na $l$-\'esima itera\'c\~ao. Ao
+    resolver o problema de otimiza\'c\~ao, tamb\'em precisamos levar em conta as
+    restri\'c\~oes nos par\^ametros, por exemplo, que os $\pi_k$ correspondam a uma fmp.
+    
+    Assuma que os dados $\data$ consistam em $n$ pontos de dados iid $\x_i$,
+    que cada $\x_i$ possua associada a si uma vari\'avel n\~ao observada escalar $h_i$,
+    e que as tuplas $(\x_i, h_i)$ sejam todas iid. O que \'e $J^l(\thetab)$ sob
+    estas hip\'oteses adicionais?
+    
+    \begin{solution}
+        Como as $(\x_i, h_i)$ s\~ao iid, temos que $p(\data,\h; \thetab) =
+        \prod_{i=1}^n p(\x_i, h_i; \thetab)$. Portanto,
+        \begin{align}
+            J^l(\thetab) &= \E_{p(\h | \data; \thetab^l)} [ \log p(\data,\h; \thetab)]\\
+            & = \E_{p(\h | \data; \thetab^l)}\left[ \sum_{i=1}^n \log  p(\x_i, h_i; \thetab)\right]\\
+            & = \sum_{i=1}^n \E_{p(\h | \data; \thetab^l)}[ \log  p(\x_i, h_i; \thetab)]\\
+            & =  \sum_{i=1}^n \E_{p(h_i | \data; \thetab^l)}[ \log  p(\x_i, h_i; \thetab)]\\
+            & =  \sum_{i=1}^n \E_{p(h_i | \x_i; \thetab^l)}[ \log  p(\x_i, h_i; \thetab)] \label{eq:Jl-intermediate-alt}
+        \end{align}
+        onde no pen\'ultimo passo usamos que cada $\log p(\x_i, h_i;
+        \thetab)]$ envolve apenas uma vari\'avel latente $h_i$, de modo que s\'o precisamos
+        tomar a esperan\'ca em rela\'c\~ao a $p(h_i | \data; \thetab^l)$, e no \'ultimo passo,
+        usamos que $h_i \independent \x_j$ para $j \neq i$.
+        
+    \end{solution}
+    
+    \item Mostre que para o modelo de vari\'avel latente em \eqref{eq:latent-var-model-alt},
+    $J^l(\thetab)$ \'e igual a
+    \begin{align}
+        J^l(\thetab) & = \sum_{i=1}^n  \sum_{k=1}^K w_{ik}^l  \log[  \pi_k  p_k(\x_i; \thetab_k) ],\label{eq:Jl-expression-alt}\\
+        w_{ik}^l & =  \frac{ \pi^l_k p_k(\x_i; \thetab^l_k)}{ \sum_{k=1}^K \pi^l_k p_k(\x_i; \thetab^l_k)}\label{eq:w-def-alt}
+    \end{align}
+    Note que os $w_{ik}^l$ s\~ao definidos em termos dos par\^ametros $\pi_k^l$ e
+    $\thetab_k^l$ da itera\'c\~ao $l$. Eles s\~ao iguais \`as probabilidades condicionais
+    $p(h=k|\x_i; \thetab^l)$, isto \'e, a probabilidade de que $\x_i$
+    tenha sido amostrada da componente $p_k(\x_i; \thetab^l_k)$. 
+    
+    \begin{solution}
+        Consideramos um \'unico termo $ \E_{p(h| \x; \thetab^l)}[ \log p(\x, h;
+        \thetab)]$ em \eqref{eq:Jl-intermediate-alt}.
+        
+        Dada a forma do modelo em \eqref{eq:latent-var-model-alt}, temos que
+        \begin{align}
+            \log p(\x, h; \thetab) = \sum_{k=1}^K \ind(h=k) \log[  \pi_k  p_k(\x; \thetab_k) ]
+        \end{align}
+        e portanto
+        \begin{align}
+            \E_{p(h| \x; \thetab^l)}[ \log p(\x, h; \thetab)] &=  \E_{p(h| \x; \thetab^l)}\left[ \sum_{k=1}^K \ind(h=k) \log[  \pi_k  p_k(\x; \thetab_k) ] \right]\\
+            &=  \sum_{k=1}^K  \E_{p(h| \x; \thetab^l)}\left[ \ind(h=k) \right] \log[  \pi_k  p_k(\x; \thetab_k) ]\\
+            & = \sum_{k=1}^K p(h=k|\x; \thetab^l)  \log[  \pi_k  p_k(\x; \thetab_k) ]
+        \end{align}
+        onde usamos que a esperan\'ca sobre um evento indicadora \'e igual \`a
+        probabilidade do evento ocorrer, isto \'e, $\E_{p(h| \x; \thetab^l)}\left[
+        \ind(h=k) \right] =  p(h=k|\x; \thetab^l)$.
+        
+        A probabilidade $p(h=k|\x; \thetab^l)$ pode ser determinada via a regra do produto
+        (regra de Bayes) e as Equa\'c\~oes \eqref{eq:latent-var-model-long-alt} e \eqref{eq:mixture-model-alt}
+        \begin{align}
+            p(h=k|\x; \thetab^l) &= \frac{p(\x, h=k, \thetab^l)}{p(\x; \thetab^l)}\\
+            & = \frac{ \pi^l_k p_k(\x; \thetab^l_k)}{ \sum_{k=1}^K \pi^l_k p_k(\x; \thetab^l_k)}
+            \label{eq:posterior-def-alt}
+        \end{align}
+        Note que o sobrescrito $^l$ indica que os $\pi_k^l$ s\~ao os pesos de mistura
+        e os $\thetab^l_k$ os par\^ametros do modelo da itera\'c\~ao $l$.
+        
+        O objetivo $J^l(\thetab)$ soma sobre $n$ termos $ \E_{p(h| \x_i; \thetab^l)}[ \log p(\x_i, h;
+        \thetab)]$. Denotemos $p(h=k|\x_i; \thetab^l)$ de \eqref{eq:posterior-def-alt} por $w_{ik}^l$ de modo que
+        \begin{equation}
+            \E_{p(h| \x_i; \thetab^l)}[ \log p(\x_i, h; \thetab)] =  \sum_{k=1}^K w_{ik}^l  \log[  \pi_k  p_k(\x; \thetab_k) ]
+        \end{equation}
+        e
+        \begin{align}
+            J^l(\thetab) & = \sum_{i=1}^n  \sum_{k=1}^K w_{ik}^l  \log[  \pi_k  p_k(\x_i; \thetab_k) ].
+        \end{align}
+        O objetivo $J^l(\thetab)$ assume a forma de uma log-verossimilhan\'ca ponderada. Em
+        mais detalhes, como $\sum_k w_{ik}^l=1$ para todos os pontos de dados $\x_i$ (e
+        $w_{ik}^l \ge 0 $), $ \sum_{k=1}^K w_{ik}^l \log[ \pi_k p_k(\x_i; \thetab_k)
+        ]$ \'e uma combina\'c\~ao convexa. Isso significa que os diferentes componentes do
+        modelo de mistura competem entre si: pesos maiores para algumas
+        componentes significam pesos menores para outras. No caso extremo, algumas
+        componentes podem contribuir de forma negligenci\'avel para o $i$-\'esimo termo da
+        log-verossimilhan\'ca.
+        
+        Os pesos $w_{ik}^l$ s\~ao s\^o vezes, em particular para misturas de
+        Gaussianas, chamados de ``atribui\'c\~oes suaves'' (*soft-assignments*) porque especificam em que medida
+        um ponto de dado $\x_i$ ``pertence'' a uma componente de mistura $p_k$.
+        Alternativamente, podemos interpretar os $w_{ik}^l$ como as
+        ``responsabilidades'' de cada componente de mistura $p_k$ por um ponto de dado $\x_i$.
+        
+        Em alguns casos, e.g.\ por raz\~oes computacionais, podemos determinar qual dos
+        $K$ pesos $w_{i1}^l, \ldots, w_{iK}^l$ \'e o maior e ent\~ao defini-lo como
+        um, enquanto definimos os outros pesos como zero. Isso corresponde a
+        ``atribui\'c\~oes r\'igidas'' (*hard-assignments* e ``hard EM'') onde um ponto de dado $\x_i$ \'e
+        exclusivamente atribu\'ido a uma \'unica componente de mistura $p_k$. 
+    \end{solution}
+    
+    \item Assuma que as diferentes componentes de mistura $p_k(\x; \thetab_k), k=1,
+    \ldots, K$ n\~ao compartilhem nenhum par\^ametro. Mostre que os valores de par\^ametros atualizados
+    $\thetab_k^{l+1}$ s\~ao dados por estimativas de m\'axima verossimilhan\'ca ponderadas.
+    
+    \begin{solution}
+        Intercambiamos a ordem dos somat\'orios em \eqref{eq:Jl-expression-alt} de modo
+        que
+        \begin{align}
+            J^l(\thetab) & = \sum_{k=1}^K \sum_{i=1}^n  w_{ik}^l  \log[  \pi_k  p_k(\x_i; \thetab_k) ]\\
+            & =  \sum_{k=1}^K \sum_{i=1}^n  w_{ik}^l \log \pi_k + \sum_{k=1}^K \underbrace{\sum_{i=1}^n  w_{ik}^l \log p_k(\x_i; \thetab_k)}_{\ell_k^l(\thetab_k)}
+            \label{eq:Jl-interchanged-alt}
+        \end{align}
+        Quando atualizamos os par\^ametros $\thetab_k$ das componentes de mistura, o
+        primeiro termo \'e uma constante. O segundo termo \'e uma soma sobre as
+        log-verossimilhan\'cas ponderadas $\ell_k^l(\thetab_k)$, uma para cada componente de mistura. Se as
+        componentes de mistura n\~ao compartilham par\^ametros, temos ent\~ao
+        \begin{equation}
+            \thetab_k^{l+1} =  \argmax_{\thetab_k}  J^l(\thetab) = \argmax_{\thetab_k} \ell_k^l(\thetab_k)
+        \end{equation}
+        Isso significa que podemos calcular $\thetab_k^{l+1}$ como se realiz\'assemos a estimativa de
+        m\'axima verossimilhan\'ca para o modelo $p_k(\x; \thetab_k)$, exceto pelo fato de
+        que os pontos de dados $\x_i$ s\~ao ponderados pelos $w_{ik}^l$.
+    \end{solution}
+    
+    \item Mostre que maximizar $J^l(\thetab)$ em rela\'c\~ao aos pesos de mistura
+    $\pi_k$ fornece a regra de atualiza\'c\~ao
+    \begin{align}
+        \pi_k^{l+1} &=  \frac{1}{n}\sum_{i=1}^n w_{ik}^l
+    \end{align}
+    \begin{solution}
+        Come\'camos com \eqref{eq:Jl-expression-alt} e descartamos os termos aditivos que n\~ao
+        dependem de $\pi_k$. Como
+        \begin{align}
+            J^l(\thetab) & =  \sum_{i=1}^n  \sum_{k=1}^K w_{ik}^l  \log \pi_k + \text{termos que n\~ao dependem dos } \pi_k
+        \end{align}
+        podemos focar no objetivo
+        \begin{align}
+            J^l_\pi(\pi_1, \ldots, \pi_K) & = \sum_{i=1}^n  \sum_{k=1}^K w_{ik}^l  \log \pi_k\\ 
+            &= \sum_{k=1}^K \underbrace{\left( \sum_{i=1}^n w_{ik}^l \right)}_{\omega_k^l}  \log \pi_k \\
+            & =  \sum_{k=1}^K \omega_k^l \log \pi_k.
+        \end{align}
+        Levando em conta que os $\pi_k = p(h=k)$ definem uma fmp, o problema de otimiza\'c\~ao a ser resolvido \'e
+        \begin{align}
+            \text{maximizar} \quad&  \sum_{k=1}^K \omega_k^l \log \pi_k\\
+            \text{sujeito a}\quad &  \pi_k \ge 0 \\
+            &  \sum_{k=1}^K \pi_k = 1 
+        \end{align}
+        O problema de otimiza\'c\~ao restrito poderia ser resolvido via multiplicadores de
+        Lagrange. Mas aqui adotamos outra abordagem e resolvemos o problema de otimiza\'c\~ao
+        expressando-o em termos de um problema de minimiza\'c\~ao da diverg\^encia KL.
+        
+        Primeiro, note que os $\pi_k$ que maximizam $J^l_\pi(\pi_1, \ldots,
+        \pi_K)$ tamb\'em maximizar\~ao o objetivo reescalonado
+        \begin{align}
+            \frac{1}{\sum_{k=1}^K \omega_k^l}  J_\pi^l(\pi_1, \ldots, \pi_K) & =  \frac{1}{\sum_{k=1}^K \omega_k^l}\sum_{k=1}^K \omega_k^l \log \pi_k\\
+            &=   \sum_{k=1}^K q_k^l \log \pi_k
+        \end{align}
+        onde introduzimos
+        \begin{equation}
+            q_k^l = \frac{\omega_k^l}{\sum_{k=1}^K \omega_{k}^l}.
+        \end{equation}
+        Os $q_k^l$ s\~ao n\~ao-negativos e somam um. Portanto, podemos considerar que eles
+        definem uma fmp.
+        
+        Segundo, note que os $\pi_k$ que maximizam $J_\pi^l(\pi_1, \ldots,
+        \pi_K)$ tamb\'em maximizar\~ao
+        \begin{align}
+            \sum_{k=1}^K q_k^l \log \pi_k - \sum_{k=1}^K q_k^l \log q_k^l & = \sum_{k=1}^K q_k^l \log \frac{\pi_k}{q_k^l}\\
+            & = -\sum_{k=1}^K q_k^l \log \frac{q_k^l}{\pi_k}\\
+            & = -\KL(q^l, \pi)
+        \end{align}
+        j\'a que adicionar constantes n\~ao altera a solu\'c\~ao. Assim, os
+        $\pi_k$ \'otimos s\~ao dados pela fmp $\pi$ que minimiza a diverg\^encia KL
+        $\KL(q^l, \pi)$. Isso significa que os $\pi_k$ \'otimos s\~ao
+        \begin{align}
+            \pi_k & = q_k^l= \frac{\omega_k^l}{\sum_{k=1}^K \omega_{k}^l} = \frac{\sum_{i=1}^n w_{ik}^l}{\sum_{k=1}^K \sum_{i=1}^n w_{ik}^l }.
+        \end{align}
+        O denominador pode ser simplificado notando que, com \eqref{eq:w-def-alt},
+        $\sum_{k=1}^K w_{ik}^l=1$, de modo que
+        \begin{align}
+            \sum_{k=1}^K \sum_{i=1}^n w_{ik}^l = \sum_{i=1}^n \sum_{k=1}^K w_{ik}^l = n
+        \end{align}   
+        A regra de atualiza\'c\~ao solicitada \'e portanto
+        \begin{align}
+            \pi_k^{l+1} &=  \frac{1}{n}\sum_{i=1}^n w_{ik}^l
+        \end{align}
+        A regra de atualiza\'c\~ao n\~ao depende diretamente do modelo estat\'istico $p_k(\x;
+        \thetab_k)$ que podemos escolher para as componentes de mistura. Sua influ\^encia
+        ocorre indiretamente atrav\'es dos $w_{ik}^l$.
+    \end{solution}
+    
+    \item \label{ex:EM-mixture-models-summary-alt} Resuma o algoritmo EM para aprender os par\^ametros $\thetab$ do
+    modelo de mistura em \eqref{eq:mixture-model-alt} a partir de dados iid $\x_1, \ldots, \x_n$.
+    
+    \begin{solution}
+        Coletamos e resumimos os resultados das quest\~oes anteriores:
+        \begin{itemize}
+            \item \textbf{Passo E na itera\'c\~ao l:} Compute as probabilidades posteriores (atribui\'c\~oes suaves)
+            \begin{align}
+                w_{ik}^l & =  \frac{ \pi^l_k p_k(\x_i; \thetab^l_k)}{ \sum_{k=1}^K \pi^l_k p_k(\x_i; \thetab^l_k)} 
+            \end{align}
+            para todos os pontos de dados $\x_i$ e componentes de mistura $k$. Em seguida, formule
+            a fun\'c\~ao objetivo $J^l(\thetab)$
+            \begin{align}
+                J^l(\thetab) & = \sum_{i=1}^n  \sum_{k=1}^K w_{ik}^l  \log[  \pi_k  p_k(\x_i; \thetab_k) ]
+            \end{align}
+            \item  \textbf{Passo M na itera\'c\~ao l:} Compute os novos pesos de mistura
+            \begin{align}
+                \pi_k^{l+1} &=  \frac{1}{n}\sum_{i=1}^n w_{ik}^l
+            \end{align}
+            Para computar os novos par\^ametros de mistura $\thetab_k^{l+1}$, maximize
+            $J^l(\thetab)$ se alguns par\^ametros forem compartilhados ou vinculados. Se os $p_k(\x;
+            \thetab_k)$ n\~ao compartilharem par\^ametros, os novos par\^ametros $\thetab_k^{l+1}$
+            s\~ao obtidos maximizando uma log-verossimilhan\'ca ponderada para cada componente de
+            mistura separadamente:
+            \begin{align}
+                \thetab_k^{l+1} &= \argmax_{\thetab_k} \sum_{i=1}^n  w_{ik}^l \log p_k(\x_i; \thetab_k)
+            \end{align}
+            para $k=1, \ldots, K$.
+        \end{itemize}
+    \end{solution}
+    
+\end{exenumerate}
+
+
+% --------------------------------------------------------------- %
+
+\ex{Algoritmo EM para mistura de Gaussianas}
+\label{ex:EM-MoG-alt}
+
+Usamos aqui os resultados do \exref{ex:EM-mixture-models-alt} para derivar as regras de atualiza\'c\~ao EM para uma mistura de Gaussianas. Este \'e um modelo de mistura onde cada
+componente de mistura \'e uma distribui\'c\~ao Gaussiana, isto \'e,
+\begin{align}
+    p(\x; \thetab) = \sum_{i=1}^K \pi_k \normal(\x; \mub_k, \Sigmab_k).
+\end{align}
+Consideramos o caso em que cada $\mub_k$ e $\Sigmab_k$ pode ser individualmente
+alterado (sem vincula\'c\~ao de par\^ametros). Os par\^ametros globais do modelo s\~ao dados
+por $\mub_k, \Sigmab_k$ e os pesos de mistura $\pi_k \ge 0$, $k=1, \ldots,
+K$. Como no caso de modelos de mistura gerais, os pesos de mistura somam um.
+
+\begin{exenumerate}
+    
+    \item Determine as estimativas de m\'axima verossimilhan\'ca para uma Gaussiana multivariada
+    $\normal(\x; \mub, \Sigmab)$ para dados iid $\data = (\x_1, \ldots, \x_n)$ quando
+    cada ponto de dado $\x_i$ possui um peso $w_i$. Os pesos s\~ao n\~ao-negativos, mas n\~ao
+    somam necessariamente um.
+    
+    \begin{solution}
+        A log-verossimilhan\'ca ponderada \'e
+        \begin{align}
+            \ell(\mub, \Sigmab) & = \sum_{i=1}^n w_i \log \normal(\x_i; \mub, \Sigmab)\\
+            & =  \sum_{i=1}^n w_i \log |\det(2 \pi \Sigmab)|^{-1/2} - \frac{1}{2} \sum_{i=1}^n w_i (\x_i-\mub)^\top\Sigmab^{-1}(\x_i-\mub)
+        \end{align}
+        Introduzindo os pesos normalizados $W_i = w_i/ \sum_{i=1}^n w_i$, temos
+        \begin{align}
+            \frac{1}{ \sum_{i=1}^n w_i} \ell(\mub, \Sigmab)  &=  \log |\det(2 \pi \Sigmab)|^{-1/2} - \frac{1}{2} \sum_{i=1}^n W_i (\x_i-\mub)^\top\Sigmab^{-1}(\x_i-\mub)
+        \end{align}
+        Vamos escrever o termo quadr\'atico
+        \begin{align} 
+            (\x_i-\mub)^T\Sigmab^{-1}(\x_i-\mub) &= \x_i^\top\Sigmab^{-1}\x_i- 2\x_i^\top \Sigmab^{-1} \mub + \mub^\top \Sigmab^{-1} \mub
+        \end{align}
+        Logo
+        \begin{align}
+            \sum_{i=1}^n W_i (\x_i-\mub)^T\Sigmab^{-1}(\x_i-\mub) &= \sum_{i=1}^n W_i \x_i^\top\Sigmab^{-1}\x_i -  2 \sum_{i=1}^n W_i\x_i^\top \Sigmab^{-1} \mub +
+            \underbrace{\sum_{i=1}^n W_i}_{=1}    \mub^\top \Sigmab^{-1} \mub  \\
+            & = \tr\left[ \left( \sum_{i=1}^n W_i \x_i \x_i^\top \right) \Sigmab^{-1} \right]- 2 \left( \sum_{i=1}^n W_i\x_i  \right)^\top \Sigmab^{-1} \mub +  \mub^\top \Sigmab^{-1} \mub \\
+            &= \tr \left( \R \Sigmab^{-1}\right) -2 \b^\top \Sigmab^{-1}\mub +  \mub^\top\Sigmab^{-1} \mub
+        \end{align}
+        onde $\R = \sum_{i=1}^n W_i \x_i \x_i^\top $ e $\b =  \sum_{i=1}^n
+        W_i\x_i$. Portanto,
+        \begin{align}
+            \frac{1}{ \sum_{i=1}^n w_i} \ell(\mub, \Sigmab)  &=  \log |\det(2 \pi \Sigmab)|^{-1/2} - \frac{1}{2} \tr \left( \R \Sigmab^{-1}\right) + \b^\top \Sigmab^{-1}\mub - \frac{1}{2}  \mub^\top\Sigmab^{-1} \mub
+        \end{align}
+        Isso possui exatamente a mesma forma que a fun\'c\~ao de verossimilhan\'ca n\~ao ponderada, apenas as
+        estat\'isticas suficientes $\R$ e $\b$ s\~ao computadas usando os pesos. Assim,
+        as estimativas de m\'axima verossimilhan\'ca, quando expressas em termos de $\R$ e $\b$,
+        permanecem as mesmas do caso n\~ao ponderado:
+        \begin{align}
+            \hat{\mub} & = \b  =  \sum_{i=1}^n W_i\x_i\\
+            \hat{\Sigmab} & = \R - \b\b^\top=  \sum_{i=1}^n W_i \x_i \x_i^\top - \b\b^\top
+        \end{align}
+        Al\'em disso, como
+        \begin{align}
+            \sum_{i=1}^n W_i (\x_i-\b)(\x_i-\b)^\top  & =  \sum_{i=1}^n W_i \x_i \x_i^\top - \underbrace{\sum_{i=1}^n W_i \x_i}_{\b} \b^\top - \b \underbrace{\sum_{i=1}^n W_i \x_i^\top}_{\b^\top} + \b\b^\top\\
+            &=\R - \b \b^\top - \b \b^\top + \b\b^\top\\
+            & =  \R - \b\b^\top
+        \end{align}
+        descobrimos que as estimativas de m\'axima verossimilhan\'ca ponderadas s\~ao a m\'edia ponderada
+        e a matriz de covari\^ancia ponderada:
+        \begin{align}
+            \hat{\mub} & =   \sum_{i=1}^n W_i\x_i&  \hat{\Sigmab} &=    \sum_{i=1}^n W_i (\x_i-\hat{\mub})(\x_i-\hat{\mub})^\top & W_i&= \frac{w_i}{\sum_{i=1}^n w_i}
+        \end{align}
+    \end{solution}
+    
+    \item Use os resultados do \exref{ex:EM-mixture-models-alt} para derivar as regras de atualiza\'c\~ao EM para os par\^ametros do modelo de mistura Gaussiana.
+    
+    \begin{solution}
+        Da solu\'c\~ao do \exref{ex:EM-mixture-models-alt}\ref{ex:EM-mixture-models-summary-alt} e das solu\'c\~oes MLE ponderadas
+        derivadas, encontramos:
+        \begin{itemize}
+            \item \textbf{Passo E na itera\'c\~ao l:} Compute as probabilidades posteriores (atribui\'c\~oes suaves)
+            \begin{align}
+                w_{ik}^l & =  \frac{ \pi^l_k \normal(\x_i; \mub^l_k, \Sigmab_k^l)}{ \sum_{k=1}^K \pi^l_k \normal(\x_i; \mub^l_k, \Sigmab_k^l) } 
+            \end{align}
+            para todos os pontos de dados $\x_i$ e componentes de mistura $k$.
+            \item  \textbf{Passo M na itera\'c\~ao l:}
+            \begin{itemize}
+                \item Determine as MLEs ponderadas
+                \begin{align}
+                    \mub_k^{l+1} & =   \sum_{i=1}^n W^l_{ik}\x_i&  \Sigmab_k^{l+1} &=    \sum_{i=1}^n W^l_{ik} (\x_i - \mub_k^{l+1})(\x_i - \mub_k^{l+1})^\top
+                \end{align}
+                onde $W^l_{ik} = w_{ik}^l/(\sum_{i=1}^n w_{ik}^l)$.
+                \item Compute os novos pesos de mistura
+                \begin{align}
+                    \pi_k^{l+1} &=  \frac{1}{n}\sum_{i=1}^n w_{ik}^l
+                \end{align}
+            \end{itemize}
+        \end{itemize}
+        
+    \end{solution}
+    
+\end{exenumerate}

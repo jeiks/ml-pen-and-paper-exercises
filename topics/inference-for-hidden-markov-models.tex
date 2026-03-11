@@ -1,1513 +1,1441 @@
 % Emacs, this is -*-latex-*-
 
-\ex{Predictive distributions for hidden Markov models}
+\ex{Distribui\'c\~oes preditivas para modelos ocultos de Markov}
 \label{ex:predictive-distributions-for-hidden-markov-models}
-For the hidden Markov model
+Para o modelo oculto de Markov
 $$ p(h_{1:d},v_{1:d}) = p(v_1|h_1)p(h_1)\prod_{i=2}^d
-p(v_i|h_i)p(h_i|h_{i-1})$$ assume you have observations for $v_i$,
+p(v_i|h_i)p(h_i|h_{i-1})$$ assuma que voc\^e possui observa\'c\~oes para $v_i$,
 $i=1, \ldots, u < d$.
 
 \begin{exenumerate}
-\item \label{q:h-predictive-hmm} Use message passing to compute $p(h_t|v_{1:u})$ for $u<t\le
-  d$. For the sake of concreteness, you may consider the case $d=6, u=2,
-  t=4$.
-
-  \begin{solution}
-    The factor graph for $d=6, u=2$, with messages that are required
-    for the computation of $p(h_t|v_{1:u})$ for $t=4$, is as follows.
-    \begin{center}
-      \scalebox{1}{
-        \begin{tikzpicture}[ugraph,minimum size=1cm, inner sep=3pt]
-          
-          \node[fact, label=above:$\phi_1$] (f1) at (-1,2) {};;
-          \node[cont] (h1) at (0,2) {$h_1$};
-          \node[fact, label=above:$\phi_2$] (f2) at (1,2) {};
-          \node[cont] (h2) at (2,2) {$h_2$};
-          \node[fact, label=above: {\footnotesize$p(h_3 | h_2)$}] (f3) at (3,2) {};
-          \node[cont] (h3) at (4,2) {$h_3$};
-          \node[fact, label=above: {\footnotesize$p(h_4 | h_3)$}] (f4) at (5,2) {};
-          \node[cont] (h4) at (6,2) {$h_4$};
-          \node[fact, label=above:$p(h_5 | h_4)$] (f5) at (7,2) {};
-          \node[cont] (h5) at (8,2) {$h_5$};
-          \node[fact, label=above:$p(h_6 | h_5)$] (f6) at (9,2) {};
-          \node[cont] (h6) at (10,2) {$h_6$};
-
-          \node[cont] (v3) at (4,0) {$v_3$};
-          \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: {\footnotesize$p(v_3 | h_3)$}}] (fv3) at (4,1) {};
-          \node[cont] (v4) at (6,0) {$v_4$};
-          \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: {\footnotesize$p(v_4 | h_4)$}}] (fv4) at (6,1) {};
-          \node[cont] (v5) at (8,0) {$v_5$};
-          \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: {\footnotesize$p(v_5 | h_5)$}}] (fv5) at (8,1) {};
-          \node[cont] (v6) at (10,0) {$v_6$};
-          \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: {\footnotesize$p(v_6 | h_6)$}}] (fv6) at (10,1) {};
-          
-          \draw(h5)--(v5);
-          \draw(h6)--(v6);
-          \draw(h1)--(h2);
-          \draw(h2)--(h3);
-          \draw(h3)--(h4);
-          \draw(h4)--(h5);
-          \draw(h5)--(h6);
-          \draw(f1) -- (h1);    
-
-          \draw(f1)--(h1) node[midway, above, yshift=-7pt] {$\rightarrow$};
-          \draw(h1)--(f2) node[midway, above, yshift=-7pt] {$\rightarrow$};
-          \draw(f2)--(h2) node[midway, above, yshift=-7pt] {$\rightarrow$};
-          \draw(h2)--(f3) node[midway, above, yshift=-7pt] {$\rightarrow$};
-          \draw(f3)--(h3) node[midway, above, yshift=-7pt] {$\rightarrow$};
-          \draw(h3)--(f4) node[midway, above, yshift=-7pt] {$\rightarrow$};
-          \draw(f4)--(h4) node[midway, above, yshift=-7pt] {\red{$\rightarrow$}};
-
-          \draw(h4)--(f5) node[midway, above, yshift=-7pt] {\red{$\leftarrow$}};
-          \draw(f5)--(h5) node[midway, above, yshift=-7pt] {$\leftarrow$};
-          \draw(h5)--(f6) node[midway, above, yshift=-7pt] {$\leftarrow$};
-          \draw(f6)--(h6) node[midway, above, yshift=-7pt] {$\leftarrow$};
-
-          \draw(fv3)--(h3) node[midway, right, xshift=-7pt] {$\uparrow$};
-          \draw(v3)--(fv3) node[midway, right, xshift=-7pt] {$\uparrow$};
-          \draw(fv4)--(h4) node[midway, right, xshift=-7pt] {$\uparrow$};
-          \draw(v4)--(fv4) node[midway, right, xshift=-7pt] {$\uparrow$};
-          \draw(fv5)--(h5) node[midway, right, xshift=-7pt] {$\uparrow$};
-          \draw(v5)--(fv5) node[midway, right, xshift=-7pt] {$\uparrow$};
-          \draw(fv6)--(h6) node[midway, right, xshift=-7pt] {$\uparrow$};
-          \draw(v6)--(fv6) node[midway, right, xshift=-7pt] {$\uparrow$};
-          
-        \end{tikzpicture}
-      }
-    \end{center}
-    The messages from the unobserved visibles $v_i$ to their
-    corresponding $h_i$, e.g.\ $v_3$ to $h_3$, are all one. Moreover,
-    the message from the $p(h_5|h_4)$ node to $h_4$ equals one as well. This
-    is because all involved factors, $p(v_i|h_i)$ and
-    $p(h_i|h_{i-1})$, sum to one. Hence the factor graph reduces to a chain:
-    \begin{center}
-      \scalebox{1}{
-        \begin{tikzpicture}[ugraph]         
-          \node[fact, label=above: $\phi_1$] (f1) at (-1.5,2) {};
-          \node[cont] (h1) at (0,2) {$h_1$};
-          \node[fact, label=above: $\phi_2$] (f2) at (1.5,2) {};
-          \node[cont] (h2) at (3,2) {$h_2$};
-          \node[fact, label=above: $p(h_3|h_2)$] (f3) at (4.5,2) {};
-          \node[cont] (h3) at (6,2) {$h_3$};
-          \node[fact, label=above: $p(h_4|h_3)$] (f4) at (7.5,2) {};
-          \node[cont] (h4) at (9,2) {$h_4$};
-          \draw(f1) -- (h1)  node[midway,above,sloped] {$\rightarrow$};
-          \draw(h1)--(f2);
-          \draw(f2)--(h2) node[midway,above,sloped] {$\rightarrow$};
-          \draw(h2)--(f3);
-          \draw(f3)--(h3) node[midway,above,sloped] {$\rightarrow$};
-          \draw(h3)--(f4);
-          \draw(f4)--(h4) node[midway,above,sloped] {\red{$\rightarrow$}}; 
-      \end{tikzpicture}}
-    \end{center}
-    Since the variable nodes copy the messages in case of a chain, we only show
-    the factor-to-variable messages.
-
-    The graph shows that we are essentially in the same situation as
-    in filtering, with the difference that we use the factors
-    $p(h_s|h_{s-1})$ for $s\ge u+1$. Hence, we can use filtering to compute
-    the messages until time $s=u$ and then compute the further
-    messages with the $p(h_s|h_{s-1})$ as factors. This gives the
-    following algorithm:
-    \begin{enumerate}
-    \item Compute $\alpha(h_u)$ by filtering.
-    \item For $s=u+1, \ldots, t$, compute
-      \begin{equation}
-        \alpha(h_s) = \sum_{h_{s-1}} p(h_s|h_{s-1}) \alpha(h_{s-1})
-      \end{equation}
-    \item The required predictive distribution is
-      \begin{equation}
-        p(h_t | v_{1:u}) = \frac{1}{Z} \alpha(h_t) \quad \quad Z = \sum_{h_t} \alpha(h_t)
-      \end{equation}
-    \end{enumerate}
-    For $s \ge u+1$, we have that
-    \begin{align}
-      \sum_{h_s} \alpha(h_s) &= \sum_{h_s} \sum_{h_{s-1}} p(h_s|h_{s-1}) \alpha(h_{s-1})\\
-      & =  \sum_{h_{s-1}} \alpha(h_{s-1})
-    \end{align}
-    since $p(h_s|h_{s-1})$ is normalised. This means that the normalising constant $Z$ above equals
-    \begin{equation}
-      Z = \sum_{h_u} \alpha(h_u) = p(v_{1:u})
-    \end{equation}
-    which is the likelihood.
-
-    For filtering, we have seen that $\alpha(h_s) \propto
-    p(h_s|v_{1:s})$, $s\le u$. The $\alpha(h_s)$ for all $s>u$ are
-    proportional to $p(h_s| v_{1:u})$. This may be seen by noting that
-    the above arguments hold for any $t>u$. 
-  \end{solution}
-
-\item Use message passing to compute $p(v_t|v_{1:u})$ for $u<t\le
-  d$. For the sake of concreteness, you may consider the case $d=6,
-  u=2, t=4$.
-
-  \begin{solution}
-    The factor graph for $d=6, u=2$, with messages that are required
-    for the computation of $p(v_t|v_{1:u})$ for $t=4$, is as follows.
-    \begin{center}
-      \scalebox{1}{
-        \begin{tikzpicture}[ugraph,minimum size=1cm, inner sep=3pt]
-          
-          \node[fact, label=above:$\phi_1$] (f1) at (-1,2) {};;
-          \node[cont] (h1) at (0,2) {$h_1$};
-          \node[fact, label=above:$\phi_2$] (f2) at (1,2) {};
-          \node[cont] (h2) at (2,2) {$h_2$};
-          \node[fact, label=above: {\footnotesize$p(h_3 | h_2)$}] (f3) at (3,2) {};
-          \node[cont] (h3) at (4,2) {$h_3$};
-          \node[fact, label=above: {\footnotesize$p(h_4 | h_3)$}] (f4) at (5,2) {};
-          \node[cont] (h4) at (6,2) {$h_4$};
-          \node[fact, label=above:$p(h_5 | h_4)$] (f5) at (7,2) {};
-          \node[cont] (h5) at (8,2) {$h_5$};
-          \node[fact, label=above:$p(h_6 | h_5)$] (f6) at (9,2) {};
-          \node[cont] (h6) at (10,2) {$h_6$};
-
-          \node[cont] (v3) at (4,0) {$v_3$};
-          \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: {\footnotesize$p(v_3 | h_3)$}}] (fv3) at (4,1) {};
-          \node[cont] (v4) at (6,0) {$v_4$};
-          \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: {\footnotesize$p(v_4 | h_4)$}}] (fv4) at (6,1) {};
-          \node[cont] (v5) at (8,0) {$v_5$};
-          \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: {\footnotesize$p(v_5 | h_5)$}}] (fv5) at (8,1) {};
-          \node[cont] (v6) at (10,0) {$v_6$};
-          \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: {\footnotesize$p(v_6 | h_6)$}}] (fv6) at (10,1) {};
-          
-          \draw(h5)--(v5);
-          \draw(h6)--(v6);
-          \draw(h1)--(h2);
-          \draw(h2)--(h3);
-          \draw(h3)--(h4);
-          \draw(h4)--(h5);
-          \draw(h5)--(h6);
-          \draw(f1) -- (h1);    
-
-          \draw(f1)--(h1) node[midway, above, yshift=-7pt] {$\rightarrow$};
-          \draw(h1)--(f2) node[midway, above, yshift=-7pt] {$\rightarrow$};
-          \draw(f2)--(h2) node[midway, above, yshift=-7pt] {$\rightarrow$};
-          \draw(h2)--(f3) node[midway, above, yshift=-7pt] {$\rightarrow$};
-          \draw(f3)--(h3) node[midway, above, yshift=-7pt] {$\rightarrow$};
-          \draw(h3)--(f4) node[midway, above, yshift=-7pt] {$\rightarrow$};
-          \draw(f4)--(h4) node[midway, above, yshift=-7pt] {$\rightarrow$};
-
-          \draw(h4)--(f5) node[midway, above, yshift=-7pt] {$\leftarrow$};
-          \draw(f5)--(h5) node[midway, above, yshift=-7pt] {$\leftarrow$};
-          \draw(h5)--(f6) node[midway, above, yshift=-7pt] {$\leftarrow$};
-          \draw(f6)--(h6) node[midway, above, yshift=-7pt] {$\leftarrow$};
-
-          \draw(fv3)--(h3) node[midway, right, xshift=-7pt] {$\uparrow$};
-          \draw(v3)--(fv3) node[midway, right, xshift=-7pt] {$\uparrow$};
-          \draw(fv4)--(h4) node[midway, right, xshift=-7pt] {$\downarrow$};
-          \draw(v4)--(fv4) node[midway, right, xshift=-7pt] {\red{$\downarrow$}};
-          \draw(fv5)--(h5) node[midway, right, xshift=-7pt] {$\uparrow$};
-          \draw(v5)--(fv5) node[midway, right, xshift=-7pt] {$\uparrow$};
-          \draw(fv6)--(h6) node[midway, right, xshift=-7pt] {$\uparrow$};
-          \draw(v6)--(fv6) node[midway, right, xshift=-7pt] {$\uparrow$};
-          
-        \end{tikzpicture}
-      }
-    \end{center}
-    Due to the normalised factors, as above, the messages to the right
-    of $h_t$ are all one. Moreover the messages that go up from the
-    $v_i$ to the $h_i, i\neq t$, are also all one. Hence the graph simplifies to a chain.
-    \begin{center}
-      \scalebox{1}{
-        \begin{tikzpicture}[ugraph]         
-          \node[fact, label=above: $\phi_1$] (f1) at (-1.5,2) {};
-          \node[cont] (h1) at (0,2) {$h_1$};
-          \node[fact, label=above: $\phi_2$] (f2) at (1.5,2) {};
-          \node[cont] (h2) at (3,2) {$h_2$};
-          \node[fact, label=above: $p(h_3|h_2)$] (f3) at (4.5,2) {};
-          \node[cont] (h3) at (6,2) {$h_3$};
-          \node[fact, label=above: $p(h_4|h_3)$] (f4) at (7.5,2) {};
-          \node[cont] (h4) at (9,2) {$h_4$};
-          \node[fact, label=above: $p(v_4|h_4)$] (fv4) at (10.5,2) {};
-          \node[cont] (v4) at (12,2) {$v_4$};
-
-          \draw(f1) -- (h1)  node[midway,above,sloped] {$\rightarrow$};
-          \draw(h1)--(f2);
-          \draw(f2)--(h2) node[midway,above,sloped] {$\rightarrow$};
-          \draw(h2)--(f3);
-          \draw(f3)--(h3) node[midway,above,sloped] {$\rightarrow$};
-          \draw(h3)--(f4);
-          \draw(f4)--(h4) node[midway,above,sloped] {\blue{$\rightarrow$}};
-          \draw(h4)--(fv4);
-          \draw(fv4)--(v4) node[midway,above,sloped] {\red{$\rightarrow$}};
-      \end{tikzpicture}}
-    \end{center}
-    The message in blue is proportional to $p(h_t|v_{1:u})$ computed
-    in question \ref{q:h-predictive-hmm}. Thus assume that we have
-    computed $p(h_t|v_{1:u})$. The predictive distribution on the
-    level of the visibles thus is
-    \begin{equation}
-      p(v_t | v_{1:u}) = \sum_{h_t} p(v_t|h_t) p(h_t|v_{1:u}).
-    \end{equation}
-    This follows from message passing since the last node ($h_4$ in
-    the graph) just copies the (normalised) message and the next
-    factor equals $p(v_t|h_t)$.
-
-    An alternative derivation follows from basic definitions and
-    operations, together with the independencies in HMMs:
-    \begin{align}
-    &\text{\scriptsize (sum rule)}&  p(v_t | v_{1:u}) &= \sum_{h_t} p(v_t, h_t|v_{1:u})\\
-    &\text{\scriptsize (product rule)}&  & = \sum_{h_t} p(v_t|h_t, v_{1:u}) p(h_t|v_{1:u})\\
-    &\text{\scriptsize ($v_t \independent v_{1:u} \mid h_t$)}&  & = \sum_{h_t} p(v_t|h_t) p(h_t|v_{1:u})
-    \end{align}
-  \end{solution}
-  
+    \item \label{q:h-predictive-hmm-alt} Use passagem de mensagens para computar $p(h_t|v_{1:u})$ para $u<t\le
+    d$. Para fins de concretude, voc\^e pode considerar o caso $d=6, u=2,
+    t=4$.
+    
+    \begin{solution}
+        O grafo de fatores para $d=6, u=2$, com mensagens que s\~ao necess\'arias
+        para o c\'alculo de $p(h_t|v_{1:u})$ para $t=4$, \'e o seguinte:
+        \begin{center}
+            \scalebox{1}{
+                \begin{tikzpicture}[ugraph,minimum size=1cm, inner sep=3pt]
+                    
+                    \node[fact, label=above:$\phi_1$] (f1) at (-1,2) {};;
+                    \node[cont] (h1) at (0,2) {$h_1$};
+                    \node[fact, label=above:$\phi_2$] (f2) at (1,2) {};
+                    \node[cont] (h2) at (2,2) {$h_2$};
+                    \node[fact, label=above: {\footnotesize$p(h_3 | h_2)$}] (f3) at (3,2) {};
+                    \node[cont] (h3) at (4,2) {$h_3$};
+                    \node[fact, label=above: {\footnotesize$p(h_4 | h_3)$}] (f4) at (5,2) {};
+                    \node[cont] (h4) at (6,2) {$h_4$};
+                    \node[fact, label=above:$p(h_5 | h_4)$] (f5) at (7,2) {};
+                    \node[cont] (h5) at (8,2) {$h_5$};
+                    \node[fact, label=above:$p(h_6 | h_5)$] (f6) at (9,2) {};
+                    \node[cont] (h6) at (10,2) {$h_6$};
+                    
+                    \node[cont] (v3) at (4,0) {$v_3$};
+                    \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: {\footnotesize$p(v_3 | h_3)$}}] (fv3) at (4,1) {};
+                    \node[cont] (v4) at (6,0) {$v_4$};
+                    \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: {\footnotesize$p(v_4 | h_4)$}}] (fv4) at (6,1) {};
+                    \node[cont] (v5) at (8,0) {$v_5$};
+                    \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: {\footnotesize$p(v_5 | h_5)$}}] (fv5) at (8,1) {};
+                    \node[cont] (v6) at (10,0) {$v_6$};
+                    \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: {\footnotesize$p(v_6 | h_6)$}}] (fv6) at (10,1) {};
+                    
+                    \draw(h5)--(v5);
+                    \draw(h6)--(v6);
+                    \draw(h1)--(h2);
+                    \draw(h2)--(h3);
+                    \draw(h3)--(h4);
+                    \draw(h4)--(h5);
+                    \draw(h5)--(h6);
+                    \draw(f1) -- (h1);    
+                    
+                    \draw(f1)--(h1) node[midway, above, yshift=-7pt] {$\rightarrow$};
+                    \draw(h1)--(f2) node[midway, above, yshift=-7pt] {$\rightarrow$};
+                    \draw(f2)--(h2) node[midway, above, yshift=-7pt] {$\rightarrow$};
+                    \draw(h2)--(f3) node[midway, above, yshift=-7pt] {$\rightarrow$};
+                    \draw(f3)--(h3) node[midway, above, yshift=-7pt] {$\rightarrow$};
+                    \draw(h3)--(f4) node[midway, above, yshift=-7pt] {$\rightarrow$};
+                    \draw(f4)--(h4) node[midway, above, yshift=-7pt] {\red{$\rightarrow$}};
+                    
+                    \draw(h4)--(f5) node[midway, above, yshift=-7pt] {\red{$\leftarrow$}};
+                    \draw(f5)--(h5) node[midway, above, yshift=-7pt] {$\leftarrow$};
+                    \draw(h5)--(f6) node[midway, above, yshift=-7pt] {$\leftarrow$};
+                    \draw(f6)--(h6) node[midway, above, yshift=-7pt] {$\leftarrow$};
+                    
+                    \draw(fv3)--(h3) node[midway, right, xshift=-7pt] {$\uparrow$};
+                    \draw(v3)--(fv3) node[midway, right, xshift=-7pt] {$\uparrow$};
+                    \draw(fv4)--(h4) node[midway, right, xshift=-7pt] {$\uparrow$};
+                    \draw(v4)--(fv4) node[midway, right, xshift=-7pt] {$\uparrow$};
+                    \draw(fv5)--(h5) node[midway, right, xshift=-7pt] {$\uparrow$};
+                    \draw(v5)--(fv5) node[midway, right, xshift=-7pt] {$\uparrow$};
+                    \draw(fv6)--(h6) node[midway, right, xshift=-7pt] {$\uparrow$};
+                    \draw(v6)--(fv6) node[midway, right, xshift=-7pt] {$\uparrow$};
+                    
+                \end{tikzpicture}
+            }
+        \end{center}
+        As mensagens das vari\'aveis vis\'iveis n\~ao observadas $v_i$ para seus
+        correspondentes $h_i$, e.g.\ $v_3$ para $h_3$, s\~ao todas iguais a um. Al\'em disso,
+        a mensagem do n\'o $p(h_5|h_4)$ para $h_4$ tamb\'em \'e igual a um. Isso
+        ocorre porque todos os fatores envolvidos, $p(v_i|h_i)$ e
+        $p(h_i|h_{i-1})$, somam um. Portanto, o grafo de fatores reduz-se a uma cadeia:
+        \begin{center}
+            \scalebox{1}{
+                \begin{tikzpicture}[ugraph]          
+                    \node[fact, label=above: $\phi_1$] (f1) at (-1.5,2) {};
+                    \node[cont] (h1) at (0,2) {$h_1$};
+                    \node[fact, label=above: $\phi_2$] (f2) at (1.5,2) {};
+                    \node[cont] (h2) at (3,2) {$h_2$};
+                    \node[fact, label=above: $p(h_3|h_2)$] (f3) at (4.5,2) {};
+                    \node[cont] (h3) at (6,2) {$h_3$};
+                    \node[fact, label=above: $p(h_4|h_3)$] (f4) at (7.5,2) {};
+                    \node[cont] (h4) at (9,2) {$h_4$};
+                    \draw(f1) -- (h1)  node[midway,above,sloped] {$\rightarrow$};
+                    \draw(h1)--(f2);
+                    \draw(f2)--(h2) node[midway,above,sloped] {$\rightarrow$};
+                    \draw(h2)--(f3);
+                    \draw(f3)--(h3) node[midway,above,sloped] {$\rightarrow$};
+                    \draw(h3)--(f4);
+                    \draw(f4)--(h4) node[midway,above,sloped] {\red{$\rightarrow$}}; 
+            \end{tikzpicture}}
+        \end{center}
+        Como os n\'os de vari\'avel copiam as mensagens no caso de uma cadeia, mostramos apenas
+        as mensagens de fator para vari\'avel.
+        
+        O grafo mostra que estamos essencialmente na mesma situa\'c\~ao que
+        na filtragem, com a diferen\'ca de que usamos os fatores
+        $p(h_s|h_{s-1})$ para $s\ge u+1$. Assim, podemos usar a filtragem para computar
+        as mensagens at\'e o tempo $s=u$ e depois computar as demais
+        mensagens com $p(h_s|h_{s-1})$ como fatores. Isso resulta no
+        seguinte algoritmo:
+        \begin{enumerate}
+            \item Compute $\alpha(h_u)$ por filtragem.
+            \item Para $s=u+1, \ldots, t$, compute
+            \begin{equation}
+                \alpha(h_s) = \sum_{h_{s-1}} p(h_s|h_{s-1}) \alpha(h_{s-1})
+            \end{equation}
+            \item A distribui\'c\~ao preditiva requerida \'e
+            \begin{equation}
+                p(h_t | v_{1:u}) = \frac{1}{Z} \alpha(h_t) \quad \quad Z = \sum_{h_t} \alpha(h_t)
+            \end{equation}
+        \end{enumerate}
+        Para $s \ge u+1$, temos que
+        \begin{align}
+            \sum_{h_s} \alpha(h_s) &= \sum_{h_s} \sum_{h_{s-1}} p(h_s|h_{s-1}) \alpha(h_{s-1})\\
+            & =  \sum_{h_{s-1}} \alpha(h_{s-1})
+        \end{align}
+        j\'a que $p(h_s|h_{s-1})$ \'e normalizada. Isso significa que a constante de normaliza\'c\~ao $Z$ acima \'e igual a
+        \begin{equation}
+            Z = \sum_{h_u} \alpha(h_u) = p(v_{1:u})
+        \end{equation}
+        que \'e a verossimilhan\'ca.
+        
+        Para a filtragem, vimos que $\alpha(h_s) \propto
+        p(h_s|v_{1:s})$, $s\le u$. Os $\alpha(h_s)$ para todo $s>u$ s\~ao
+        proporcionais a $p(h_s| v_{1:u})$. Isso pode ser visto notando que
+        os argumentos acima valem para qualquer $t>u$. 
+    \end{solution}
+    
+    \item Use passagem de mensagens para computar $p(v_t|v_{1:u})$ para $u<t\le
+    d$. Para fins de concretude, voc\^e pode considerar o caso $d=6,
+    u=2, t=4$.
+    
+    \begin{solution}
+        O grafo de fatores para $d=6, u=2$, com mensagens que s\~ao necess\'arias
+        para o c\'alculo de $p(v_t|v_{1:u})$ para $t=4$, \'e como segue:
+        \begin{center}
+            \scalebox{1}{
+                \begin{tikzpicture}[ugraph,minimum size=1cm, inner sep=3pt]
+                    
+                    \node[fact, label=above:$\phi_1$] (f1) at (-1,2) {};;
+                    \node[cont] (h1) at (0,2) {$h_1$};
+                    \node[fact, label=above:$\phi_2$] (f2) at (1,2) {};
+                    \node[cont] (h2) at (2,2) {$h_2$};
+                    \node[fact, label=above: {\footnotesize$p(h_3 | h_2)$}] (f3) at (3,2) {};
+                    \node[cont] (h3) at (4,2) {$h_3$};
+                    \node[fact, label=above: {\footnotesize$p(h_4 | h_3)$}] (f4) at (5,2) {};
+                    \node[cont] (h4) at (6,2) {$h_4$};
+                    \node[fact, label=above:$p(h_5 | h_4)$] (f5) at (7,2) {};
+                    \node[cont] (h5) at (8,2) {$h_5$};
+                    \node[fact, label=above:$p(h_6 | h_5)$] (f6) at (9,2) {};
+                    \node[cont] (h6) at (10,2) {$h_6$};
+                    
+                    \node[cont] (v3) at (4,0) {$v_3$};
+                    \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: {\footnotesize$p(v_3 | h_3)$}}] (fv3) at (4,1) {};
+                    \node[cont] (v4) at (6,0) {$v_4$};
+                    \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: {\footnotesize$p(v_4 | h_4)$}}] (fv4) at (6,1) {};
+                    \node[cont] (v5) at (8,0) {$v_5$};
+                    \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: {\footnotesize$p(v_5 | h_5)$}}] (fv5) at (8,1) {};
+                    \node[cont] (v6) at (10,0) {$v_6$};
+                    \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: {\footnotesize$p(v_6 | h_6)$}}] (fv6) at (10,1) {};
+                    
+                    \draw(h5)--(v5);
+                    \draw(h6)--(v6);
+                    \draw(h1)--(h2);
+                    \draw(h2)--(h3);
+                    \draw(h3)--(h4);
+                    \draw(h4)--(h5);
+                    \draw(h5)--(h6);
+                    \draw(f1) -- (h1);    
+                    
+                    \draw(f1)--(h1) node[midway, above, yshift=-7pt] {$\rightarrow$};
+                    \draw(h1)--(f2) node[midway, above, yshift=-7pt] {$\rightarrow$};
+                    \draw(f2)--(h2) node[midway, above, yshift=-7pt] {$\rightarrow$};
+                    \draw(h2)--(f3) node[midway, above, yshift=-7pt] {$\rightarrow$};
+                    \draw(f3)--(h3) node[midway, above, yshift=-7pt] {$\rightarrow$};
+                    \draw(h3)--(f4) node[midway, above, yshift=-7pt] {$\rightarrow$};
+                    \draw(f4)--(h4) node[midway, above, yshift=-7pt] {$\rightarrow$};
+                    
+                    \draw(h4)--(f5) node[midway, above, yshift=-7pt] {$\leftarrow$};
+                    \draw(f5)--(h5) node[midway, above, yshift=-7pt] {$\leftarrow$};
+                    \draw(h5)--(f6) node[midway, above, yshift=-7pt] {$\leftarrow$};
+                    \draw(f6)--(h6) node[midway, above, yshift=-7pt] {$\leftarrow$};
+                    
+                    \draw(fv3)--(h3) node[midway, right, xshift=-7pt] {$\uparrow$};
+                    \draw(v3)--(fv3) node[midway, right, xshift=-7pt] {$\uparrow$};
+                    \draw(fv4)--(h4) node[midway, right, xshift=-7pt] {$\downarrow$};
+                    \draw(v4)--(fv4) node[midway, right, xshift=-7pt] {\red{$\downarrow$}};
+                    \draw(fv5)--(h5) node[midway, right, xshift=-7pt] {$\uparrow$};
+                    \draw(v5)--(fv5) node[midway, right, xshift=-7pt] {$\uparrow$};
+                    \draw(fv6)--(h6) node[midway, right, xshift=-7pt] {$\uparrow$};
+                    \draw(v6)--(fv6) node[midway, right, xshift=-7pt] {$\uparrow$};
+                    
+                \end{tikzpicture}
+            }
+        \end{center}
+        Devido aos fatores normalizados, como acima, as mensagens \`a direita
+        de $h_t$ s\~ao todas iguais a um. Al\'em disso, as mensagens que sobem de
+        $v_i$ para $h_i, i\neq t$, tamb\'em s\~ao todas um. Portanto, o grafo simplifica-se para uma cadeia.
+        \begin{center}
+            \scalebox{1}{
+                \begin{tikzpicture}[ugraph]          
+                    \node[fact, label=above: $\phi_1$] (f1) at (-1.5,2) {};
+                    \node[cont] (h1) at (0,2) {$h_1$};
+                    \node[fact, label=above: $\phi_2$] (f2) at (1.5,2) {};
+                    \node[cont] (h2) at (3,2) {$h_2$};
+                    \node[fact, label=above: $p(h_3|h_2)$] (f3) at (4.5,2) {};
+                    \node[cont] (h3) at (6,2) {$h_3$};
+                    \node[fact, label=above: $p(h_4|h_3)$] (f4) at (7.5,2) {};
+                    \node[cont] (h4) at (9,2) {$h_4$};
+                    \node[fact, label=above: $p(v_4|h_4)$] (fv4) at (10.5,2) {};
+                    \node[cont] (v4) at (12,2) {$v_4$};
+                    
+                    \draw(f1) -- (h1)  node[midway,above,sloped] {$\rightarrow$};
+                    \draw(h1)--(f2);
+                    \draw(f2)--(h2) node[midway,above,sloped] {$\rightarrow$};
+                    \draw(h2)--(f3);
+                    \draw(f3)--(h3) node[midway,above,sloped] {$\rightarrow$};
+                    \draw(h3)--(f4);
+                    \draw(f4)--(h4) node[midway,above,sloped] {\blue{$\rightarrow$}};
+                    \draw(h4)--(fv4);
+                    \draw(fv4)--(v4) node[midway,above,sloped] {\red{$\rightarrow$}};
+            \end{tikzpicture}}
+        \end{center}
+        A mensagem em azul \'e proporcional a $p(h_t|v_{1:u})$ computada
+        na quest\~ao \ref{q:h-predictive-hmm-alt}. Assim, assuma que tenhamos
+        computado $p(h_t|v_{1:u})$. A distribui\'c\~ao preditiva no
+        n\'ivel das vis\'iveis \'e, portanto,
+        \begin{equation}
+            p(v_t | v_{1:u}) = \sum_{h_t} p(v_t|h_t) p(h_t|v_{1:u}).
+        \end{equation}
+        Isso decorre da passagem de mensagens, pois o \'ultimo n\'o ($h_4$ no
+        grafo) apenas copia a mensagem (normalizada) e o pr\'oximo
+        fator \'e igual a $p(v_t|h_t)$.
+        
+        Uma deriva\'c\~ao alternativa segue de defini\'c\~oes e
+        opera\'c\~oes b\'asicas, juntamente com as independ\^encias em HMMs:
+        \begin{align}
+            &\text{\scriptsize (regra da soma)}&  p(v_t | v_{1:u}) &= \sum_{h_t} p(v_t, h_t|v_{1:u})\\
+            &\text{\scriptsize (regra do produto)}&  & = \sum_{h_t} p(v_t|h_t, v_{1:u}) p(h_t|v_{1:u})\\
+            &\text{\scriptsize ($v_t \independent v_{1:u} \mid h_t$)}&   & = \sum_{h_t} p(v_t|h_t) p(h_t|v_{1:u})
+        \end{align}
+    \end{solution}
+    
 \end{exenumerate}
 % ---------------------------------------
 
-\ex{Viterbi algorithm}
+\ex{Algoritmo de Viterbi}
 
-For the hidden Markov model
+Para o modelo oculto de Markov
 $$ p(h_{1:t},v_{1:t}) = p(v_1|h_1)p(h_1)\prod_{i=2}^t
-p(v_i|h_i)p(h_i|h_{i-1})$$ assume you have observations for $v_i$,
-$i=1, \ldots, t$. Use the max-sum algorithm to derive an iterative algorithm to compute
+p(v_i|h_i)p(h_i|h_{i-1})$$ assuma que voc\^e possui observa\'c\~oes para $v_i$,
+$i=1, \ldots, t$. Use o algoritmo max-sum para derivar um algoritmo iterativo para computar
 \begin{equation}
-  \hat{\h} = \argmax_{h_1, \ldots, h_t}  p(h_{1:t}|v_{1:t})
+    \hat{\h} = \argmax_{h_1, \ldots, h_t}  p(h_{1:t}|v_{1:t})
 \end{equation}
-Assume that the latent variables $h_i$ can take $K$ different values,
-e.g.\ $h_i \in \{0,\ldots, K-1\}$. The resulting algorithm is known as
-Viterbi algorithm.
+Assuma que as vari\'aveis latentes $h_i$ possam assumir $K$ valores diferentes,
+e.g.\ $h_i \in \{0,\ldots, K-1\}$. O algoritmo resultante \'e conhecido como
+algoritmo de Viterbi.
 
 \begin{solution}
-  
-  We first form the factors
-  \begin{align}
-    \phi_1(h_1) &= p(v_1|h_1) p(h_1)& \phi_2(h_1, h_2) &= p(v_2|h_2) p(h_2|h_1)\\
-    \ldots      &                  & \phi_t(h_{t-1},h_t) &= p(v_t|h_t) p(h_{t}|h_{t-1})
-  \end{align}
- where the $v_i$ are known and fixed. The posterior $p(h_1, \ldots,
- h_t | v_1, \ldots, v_t)$ is then represented by the following factor
- graph (assuming $t=4$).
-  
-  \begin{center}
-    \scalebox{1}{
-      \begin{tikzpicture}[ugraph]         
-        \node[fact, label=above: $\phi_1$] (f1) at (-1.5,2) {};
-        \node[cont] (h1) at (0,2) {$h_1$};
-        \node[fact, label=above: $\phi_2$] (f2) at (1.5,2) {};
-        \node[cont] (h2) at (3,2) {$h_2$};
-        \node[fact, label=above: $\phi_3$] (f3) at (4.5,2) {};
-        \node[cont] (h3) at (6,2) {$h_3$};
-        \node[fact, label=above: $\phi_4$] (f4) at (7.5,2) {};
-        \node[cont] (h4) at (9,2) {$h_4$};
-        
-        \draw(f1)--(h1);
-        \draw(h1)--(f2);
-        \draw(f2)--(h2);
-        \draw(h2)--(f3);
-        \draw(f3)--(h3);
-        \draw(h3)--(f4);
-        \draw(f4)--(h4);
-    \end{tikzpicture}}
-  \end{center}
-
-  For the max-sum algorithm, we here choose $h_t$ to be the root. We
-  thus initialise the algorithm with $\mfxmess{\phi_1}{h_1}{1}(h_1) =
-  \log \phi_1(h_1) = \log p(v_1|h_1) + \log p(h_1)$ and then compute the
-  messages from left to right, moving from the leaf $\phi_1$ to the
-  root $h_t$.
-
-  Since we are dealing with a chain, the variable nodes, much like in
-  the sum-product algorithm, just copy the incoming messages. It thus
-  suffices to compute the factor to variable messages shown in the
-  graph, and then backtrack to $h_1$.
-  
- \begin{center}
-      \scalebox{1}{
-        \begin{tikzpicture}[ugraph]         
-          \node[fact, label=above: $\phi_1$] (f1) at (-1.5,2) {};
-          \node[cont] (h1) at (0,2) {$h_1$};
-          \node[fact, label=above: $\phi_2$] (f2) at (1.5,2) {};
-          \node[cont] (h2) at (3,2) {$h_2$};
-          \node[fact, label=above: $\phi_3$] (f3) at (4.5,2) {};
-          \node[cont] (h3) at (6,2) {$h_3$};
-          \node[fact, label=above: $\phi_4$] (f4) at (7.5,2) {};
-          \node[cont] (h4) at (9,2) {$h_4$};
-
-          \draw(f1) -- (h1)  node[midway,above,sloped] {$\rightarrow$};
-          \draw(h1)--(f2);
-          \draw(f2)--(h2) node[midway,above,sloped] {$\rightarrow$};
-          \draw(h2)--(f3);
-          \draw(f3)--(h3) node[midway,above,sloped] {$\rightarrow$};
-          \draw(h3)--(f4);
-          \draw(f4)--(h4) node[midway,above,sloped] {$\rightarrow$};
-      \end{tikzpicture}}
- \end{center}
-
- With $\mxfmess{h_{i-1}}{\phi_i}{1}(h_{i-1})=\mfxmess{\phi_{i-1}}{h_{i-1}}{1}(h_{i-1})$, the factor-to-variable update equation is
- \begin{align}
-   \mfxmess{\phi_i}{h_i}{1}(h_i) &= \max_{h_{i-1}} \log \phi_i(h_{i-1}, h_i) + \mxfmess{h_{i-1}}{\phi_i}{1}(h_{i-1})\\
-   &= \max_{h_{i-1}} \log \phi_i(h_{i-1}, h_i) + \mfxmess{\phi_{i-1}}{h_{i-1}}{1}(h_{i-1})
- \end{align}
- To simplify notation, denote $\mfxmess{\phi_i}{h_i}{1}(h_i)$ by $V_i(h_i)$. We thus have
- \begin{align}
-   V_1(h_1) & = \log p(v_1|h_1) + \log p(h_1) \\
-   V_i(h_i) & =  \max_{h_{i-1}} \log \phi_i(h_{i-1}, h_i) + V_{i-1}(h_{i-1}) \quad \quad i=2, \ldots, t
- \end{align}
- In general, $V_1(h_1)$ and $V_i(h_i)$ are functions that depend on
- $h_1$ and $h_i$, respectively.  Assuming that the $h_i$ can take on
- the values $0, \ldots, K-1$, the above equations can be written as
-\begin{align}
-  v_{1,k} &= \log p(v_1|k) + \log p(k) &  k&=0, \ldots, K-1\\
-  v_{i,k} & =  \max_{m \in{0, \ldots, K-1}} \log \phi_i(m, k) + v_{i-1,m} &  k&=0, \ldots, K-1, \quad i=2, \ldots, t,
- \end{align}
-At the end of the algorithm, we thus have a $t \times K$ matrix $\V$
-with elements $v_{i,k}$.
-
-The maximisation can be performed by computing the temporary matrix
-$\A$ (via broadcasting) where the $(m,k)$-th element is $\log
-\phi_i(m, k) + v_{i-1,m}$. Maximisation then corresponds to
-determining the maximal value in each column.
-
-To support the backtracking, when we compute $V_i(h_i)$ by maximising
-over $h_{i-1}$, we compute at the same time the look-up table
-\begin{equation}
-  \gamma_i^*(h_i)   =  \argmax_{h_{i-1}} \log \phi_i(h_{i-1}, h_i) + V_{i-1}(h_{i-1})
-\end{equation}
-When $h_i$ takes on the values $0, \ldots, K-1$, this can be written as
-\begin{equation}
-  \gamma^*_{i,k} = \argmax_{m \in{0, \ldots, K-1}} \log \phi_i(m, k) + v_{i-1,m}
-\end{equation}
-This is the (row) index of the maximal element in each column of the temporary matrix $\A$.
-
-After computing $v_{t,k}$ and $\gamma^*_{t,k}$, we then perform
-backtracking via
-\begin{align}
-  \hat{h}_t & = \argmax_{k}   v_{t,k}\\
-  \hat{h}_i & = \gamma^*_{i+1,\hat{h}_{i+1}} \quad \quad i=t-1, \ldots, 1
-\end{align}
-This gives recursively $\hat{\h} = (\hat{h}_1, \ldots, \hat{h}_t) = \argmax_{h_1, \ldots, h_t}  p(h_{1:t}|v_{1:t})$.
-
+    
+    Primeiro formamos os fatores:
+    \begin{align}
+        \phi_1(h_1) &= p(v_1|h_1) p(h_1)& \phi_2(h_1, h_2) &= p(v_2|h_2) p(h_2|h_1)\\
+        \ldots      &                   & \phi_t(h_{t-1},h_t) &= p(v_t|h_t) p(h_{t}|h_{t-1})
+    \end{align}
+    onde os $v_i$ s\~ao conhecidos e fixos. A posteriori $p(h_1, \ldots,
+    h_t | v_1, \ldots, v_t)$ \'e ent\~ao representada pelo seguinte grafo de
+    fatores (assumindo $t=4$).
+    
+    \begin{center}
+        \scalebox{1}{
+            \begin{tikzpicture}[ugraph]          
+                \node[fact, label=above: $\phi_1$] (f1) at (-1.5,2) {};
+                \node[cont] (h1) at (0,2) {$h_1$};
+                \node[fact, label=above: $\phi_2$] (f2) at (1.5,2) {};
+                \node[cont] (h2) at (3,2) {$h_2$};
+                \node[fact, label=above: $\phi_3$] (f3) at (4.5,2) {};
+                \node[cont] (h3) at (6,2) {$h_3$};
+                \node[fact, label=above: $\phi_4$] (f4) at (7.5,2) {};
+                \node[cont] (h4) at (9,2) {$h_4$};
+                
+                \draw(f1)--(h1);
+                \draw(h1)--(f2);
+                \draw(f2)--(h2);
+                \draw(h2)--(f3);
+                \draw(f3)--(h3);
+                \draw(h3)--(f4);
+                \draw(f4)--(h4);
+        \end{tikzpicture}}
+    \end{center}
+    
+    Para o algoritmo max-sum, escolhemos aqui $h_t$ como a raiz. 
+    Iniciamos ent\~ao o algoritmo com $\mfxmess{\phi_1}{h_1}{1}(h_1) =
+    \log \phi_1(h_1) = \log p(v_1|h_1) + \log p(h_1)$ e ent\~ao computamos as
+    mensagens da esquerda para a direita, movendo-se da folha $\phi_1$ para a
+    raiz $h_t$.
+    
+    Como estamos lidando com uma cadeia, os n\'os de vari\'avel, assim como no
+    algoritmo sum-product, apenas copiam as mensagens de entrada. Portanto,
+    basta computar as mensagens de fator para vari\'avel mostradas no
+    grafo, e ent\~ao realizar o backtracking para $h_1$.
+    
+    \begin{center}
+        \scalebox{1}{
+            \begin{tikzpicture}[ugraph]          
+                \node[fact, label=above: $\phi_1$] (f1) at (-1.5,2) {};
+                \node[cont] (h1) at (0,2) {$h_1$};
+                \node[fact, label=above: $\phi_2$] (f2) at (1.5,2) {};
+                \node[cont] (h2) at (3,2) {$h_2$};
+                \node[fact, label=above: $\phi_3$] (f3) at (4.5,2) {};
+                \node[cont] (h3) at (6,2) {$h_3$};
+                \node[fact, label=above: $\phi_4$] (f4) at (7.5,2) {};
+                \node[cont] (h4) at (9,2) {$h_4$};
+                
+                \draw(f1) -- (h1)  node[midway,above,sloped] {$\rightarrow$};
+                \draw(h1)--(f2);
+                \draw(f2)--(h2) node[midway,above,sloped] {$\rightarrow$};
+                \draw(h2)--(f3);
+                \draw(f3)--(h3) node[midway,above,sloped] {$\rightarrow$};
+                \draw(h3)--(f4);
+                \draw(f4)--(h4) node[midway,above,sloped] {$\rightarrow$};
+        \end{tikzpicture}}
+    \end{center}
+    
+    Com $\mxfmess{h_{i-1}}{\phi_i}{1}(h_{i-1})=\mfxmess{\phi_{i-1}}{h_{i-1}}{1}(h_{i-1})$, a equa\'c\~ao de atualiza\'c\~ao fator-para-vari\'avel \'e:
+    \begin{align}
+        \mfxmess{\phi_i}{h_i}{1}(h_i) &= \max_{h_{i-1}} \{ \log \phi_i(h_{i-1}, h_i) + \mxfmess{h_{i-1}}{\phi_i}{1}(h_{i-1}) \}\\
+        &= \max_{h_{i-1}} \{ \log \phi_i(h_{i-1}, h_i) + \mfxmess{\phi_{i-1}}{h_{i-1}}{1}(h_{i-1}) \}
+    \end{align}
+    Para simplificar a nota\'c\~ao, denote $\mfxmess{\phi_i}{h_i}{1}(h_i)$ por $V_i(h_i)$. Temos, assim:
+    \begin{align}
+        V_1(h_1) & = \log p(v_1|h_1) + \log p(h_1) \\
+        V_i(h_i) & =  \max_{h_{i-1}} \{ \log \phi_i(h_{i-1}, h_i) + V_{i-1}(h_{i-1}) \} \quad \quad i=2, \ldots, t
+    \end{align}
+    Em geral, $V_1(h_1)$ e $V_i(h_i)$ s\~ao fun\'c\~oes que dependem de
+    $h_1$ e $h_i$, respectivamente. Assumindo que os $h_i$ possam assumir
+    os valores $0, \ldots, K-1$, as equa\'c\~oes acima podem ser escritas como:
+    \begin{align}
+        v_{1,k} &= \log p(v_1|k) + \log p(k) &  k&=0, \ldots, K-1\\
+        v_{i,k} & =  \max_{m \in \{0, \ldots, K-1\}} \{ \log \phi_i(m, k) + v_{i-1,m} \} &  k&=0, \ldots, K-1, \quad i=2, \ldots, t,
+    \end{align}
+    Ao final do algoritmo, temos portanto uma matriz $\V$ de dimens\~ao $t \times K$
+    com elementos $v_{i,k}$.
+    
+    A maximiza\'c\~ao pode ser realizada computando-se a matriz tempor\'aria
+    $\A$ (via broadcasting) onde o elemento $(m,k)$ \'e $\log
+    \phi_i(m, k) + v_{i-1,m}$. A maximiza\'c\~ao corresponde ent\~ao a
+    determinar o valor m\'aximo em cada coluna.
+    
+    Para suportar o backtracking, quando computamos $V_i(h_i)$ ao maximizar
+    sobre $h_{i-1}$, computamos simultaneamente a tabela de consulta:
+    \begin{equation}
+        \gamma_i^*(h_i)   =  \argmax_{h_{i-1}} \{ \log \phi_i(h_{i-1}, h_i) + V_{i-1}(h_{i-1}) \}
+    \end{equation}
+    Quando $h_i$ assume os valores $0, \ldots, K-1$, isso pode ser escrito como:
+    \begin{equation}
+        \gamma^*_{i,k} = \argmax_{m \in \{0, \ldots, K-1\}} \{ \log \phi_i(m, k) + v_{i-1,m} \}
+    \end{equation}
+    Este \'e o \'indice (da linha) do elemento m\'aximo em cada coluna da matriz tempor\'aria $\A$.
+    
+    Ap\'os computar $v_{t,k}$ e $\gamma^*_{t,k}$, realizamos ent\~ao o
+    backtracking via:
+    \begin{align}
+        \hat{h}_t & = \argmax_{k}   v_{t,k}\\
+        \hat{h}_i & = \gamma^*_{i+1,\hat{h}_{i+1}} \quad \quad i=t-1, \ldots, 1
+    \end{align}
+    Isso fornece recursivamente $\hat{\h} = (\hat{h}_1, \ldots, \hat{h}_t) = \argmax_{h_1, \ldots, h_t}  p(h_{1:t}|v_{1:t})$.
+    
 \end{solution}
 
 % ---------------------------------------
 
-\ex{Forward filtering backward sampling for hidden Markov models}
-\label{ex:FFBS}
+\ex{Amostragem forward filtering backward sampling para modelos ocultos de Markov}
+\label{ex:FFBS-alt}
 
-Consider the hidden Markov model specified by the following DAG.
+Considere o modelo oculto de Markov especificado pelo seguinte DAG.
 
 \begin{center}
-  \scalebox{0.8}{
-    \begin{tikzpicture}[dgraph, minimum size=0.5cm, inner sep=3pt]
-      \node[cont] (h1) at (0,2) {$h_1$};
-      \node       (aa) at (1,2) {};
-      \node       (bb) at (2,2) {$\ldots$};
-      \node       (cc) at (2,0) {$\ldots$};
-      \node       (dd) at (3,2) {};
-
-      \node[cont, inner sep=0em] (h2) at (5,2) {$h_{t-1}$};
-      \node[cont] (h3) at (7,2) {$h_{t}$};
-      
-      \node       (a) at (8,2) {};
-      \node       (b) at (9,2) {$\ldots$};
-      \node       (c) at (9,0) {$\ldots$};
-      \node       (d) at (10,2) {};
-      
-      \node[cont] (h4) at (12,2) {$h_n$};
-
-      \node[cont] (v1) at (0,0) {$v_1$};
-      \node[cont, inner sep=0em] (v2) at (5,0) {$v_{t-1}$};
-      \node[cont] (v3) at (7,0) {$v_t$};
-      \node[cont] (v4) at (12,0) {$v_n$};
-      \draw(h1)--(v1);\draw(h2)--(v2);\draw(h3)--(v3);\draw(h4)--(v4);
-      \draw(h1)--(aa);\draw(dd)--(h2);\draw(h2)--(h3);\draw(h3)--(a);\draw(d)--(h4);
-  \end{tikzpicture}}
+    \scalebox{0.8}{
+        \begin{tikzpicture}[dgraph, minimum size=0.5cm, inner sep=3pt]
+            \node[cont] (h1) at (0,2) {$h_1$};
+            \node       (aa) at (1,2) {};
+            \node       (bb) at (2,2) {$\ldots$};
+            \node       (cc) at (2,0) {$\ldots$};
+            \node       (dd) at (3,2) {};
+            
+            \node[cont, inner sep=0em] (h2) at (5,2) {$h_{t-1}$};
+            \node[cont] (h3) at (7,2) {$h_{t}$};
+            
+            \node       (a) at (8,2) {};
+            \node       (b) at (9,2) {$\ldots$};
+            \node       (c) at (9,0) {$\ldots$};
+            \node       (d) at (10,2) {};
+            
+            \node[cont] (h4) at (12,2) {$h_n$};
+            
+            \node[cont] (v1) at (0,0) {$v_1$};
+            \node[cont, inner sep=0em] (v2) at (5,0) {$v_{t-1}$};
+            \node[cont] (v3) at (7,0) {$v_t$};
+            \node[cont] (v4) at (12,0) {$v_n$};
+            \draw(h1)--(v1);\draw(h2)--(v2);\draw(h3)--(v3);\draw(h4)--(v4);
+            \draw(h1)--(aa);\draw(dd)--(h2);\draw(h2)--(h3);\draw(h3)--(a);\draw(d)--(h4);
+    \end{tikzpicture}}
 \end{center}
-We assume that have already run the alpha-recursion (filtering) and
-can compute $p(h_t | v_{1:t})$ for all $t$. The goal is now to
-generate samples $p(h_1, \ldots, h_n | v_{1:n})$, i.e.\ entire
-trajectories $(h_1, \ldots, h_n)$ from the posterior. Note that this is
-not the same as sampling from the $n$ filtering distributions $p(h_t |
-v_{1:t})$. Moreover, compared to the Viterbi algorithm, the sampling approach
-generates samples from the full posterior rather than just returning
-the most probable state and its corresponding probability.
+Assumimos que j\'a tenhamos executado a recurs\~ao alfa (filtragem) e
+possamos computar $p(h_t | v_{1:t})$ para todo $t$. O objetivo \'e agora
+gerar amostras de $p(h_1, \ldots, h_n | v_{1:n})$, i.e.\ trajet\'orias
+inteiras $(h_1, \ldots, h_n)$ da posteriori. Note que isso n\~ao \'e o mesmo que amostrar das $n$ distribui\'c\~oes de filtragem $p(h_t |
+v_{1:t})$. Al\'em disso, comparado ao algoritmo de Viterbi, a abordagem de amostragem
+gera amostras da posteriori completa, em vez de apenas retornar
+o estado mais prov\'avel e sua probabilidade correspondente.
 
 \begin{exenumerate}
-\item Show that $p(h_1, \ldots, h_n|v_{1:n})$ forms a
-  first-order Markov chain.
-
-  \begin{solution}
-    There are several ways to show this. The simplest is to notice
-    that the undirected graph for the hidden Markov model is the same
-    as the DAG but with the arrows removed as there are no colliders
-    in the DAG. Moreover, conditioning corresponds to removing nodes
-    from an undirected graph. This leaves us with a chain that
-    connects the $h_i$.
-    \begin{center}
-      \scalebox{0.8}{
-        \begin{tikzpicture}[ugraph]
-          \node[cont] (h1) at (0,2) {$h_1$};
-          \node[cont] (h2) at (2,2) {$h_2$};
-          \node[cont] (h3) at (4,2) {$h_3$};
-          \node       (a) at (6,2) {};
-          \node       (b) at (7,2) {$\ldots$};
-          \node       (d) at (8,2) {};
-          \node[cont] (h4) at (10,2) {$h_n$};
-          \draw(h1)--(h2);\draw(h2)--(h3);\draw(h3)--(a);\draw(d)--(h4);
-      \end{tikzpicture}}
-    \end{center}
+    \item Mostre que $p(h_1, \ldots, h_n|v_{1:n})$ forma uma
+    cadeia de Markov de primeira ordem.
     
-  By graph separation, we see that $p(h_1,\ldots, h_n|v_{1:n})$ forms
-  a first-order Markov chain so that e.g.\ $h_{1:t-1} \independent
-  h_{t+1:n} | h_t$ (past independent from the future given the
-  present).
+    \begin{solution}
+        Existem v\'arias maneiras de mostrar isso. A mais simples \'e notar
+        que o grafo n\~ao direcionado para o modelo oculto de Markov \'e o mesmo
+        que o DAG, mas com as setas removidas, pois n\~ao h\'a colisores
+        no DAG. Al\'em disso, o condicionamento corresponde \`a remo\'c\~ao de n\'os
+        de um grafo n\~ao direcionado. Isso nos deixa com uma cadeia que
+        conecta os $h_i$.
+        \begin{center}
+            \scalebox{0.8}{
+                \begin{tikzpicture}[ugraph]
+                    \node[cont] (h1) at (0,2) {$h_1$};
+                    \node[cont] (h2) at (2,2) {$h_2$};
+                    \node[cont] (h3) at (4,2) {$h_3$};
+                    \node       (a) at (6,2) {};
+                    \node       (b) at (7,2) {$\ldots$};
+                    \node       (d) at (8,2) {};
+                    \node[cont] (h4) at (10,2) {$h_n$};
+                    \draw(h1)--(h2);\draw(h2)--(h3);\draw(h3)--(a);\draw(d)--(h4);
+            \end{tikzpicture}}
+        \end{center}
+        
+        Pela separa\'c\~ao de grafos, vemos que $p(h_1,\ldots, h_n|v_{1:n})$ forma
+        uma cadeia de Markov de primeira ordem, de modo que e.g.\ $h_{1:t-1} \independent
+        h_{t+1:n} | h_t$ (passado independente do futuro dado o
+        presente).
+        
+    \end{solution}
     
-  \end{solution}
-  
-  \item Since $p(h_1, \ldots, h_n|v_{1:n})$ is a first-order Markov
-    chain, it suffices to determine $p(h_{t-1}|h_t, v_{1:n})$, the
-    probability mass function for $h_{t-1}$ given $h_t$ and
-    all the data $v_{1:n}$. Use message passing to show
-    that
+    \item Como $p(h_1, \ldots, h_n|v_{1:n})$ \'e uma cadeia de Markov de
+    primeira ordem, basta determinar $p(h_{t-1}|h_t, v_{1:n})$, a
+    fun\'c\~ao de massa de probabilidade para $h_{t-1}$ dado $h_t$ e
+    todos os dados $v_{1:n}$. Use passagem de mensagens para mostrar
+    que
     \begin{equation}
-      p(h_{t-1}, h_t| v_{1:n}) \propto \alpha(h_{t-1}) \beta(h_t) p(h_t|h_{t-1})p(v_t|h_t) 
+        p(h_{t-1}, h_t| v_{1:n}) \propto \alpha(h_{t-1}) \beta(h_t) p(h_t|h_{t-1})p(v_t|h_t) 
     \end{equation}
-
+    
     \begin{solution}
-      Since all visibles are in the conditioning set, i.e.\ assumed
-      observed, we can represent the conditional model $p(h_1, \ldots,
-      h_n|v_{1:n})$ as a chain factor tree, e.g.\ as follows in case
-      of $n=4$
-      \begin{center}
-        \scalebox{1}{
-          \begin{tikzpicture}[ugraph]         
-            \node[fact, label=above: $\phi_1$] (f1) at (-1.5,2) {};
-            \node[cont] (h1) at (0,2) {$h_1$};
-            \node[fact, label=above: $\phi_2$] (f2) at (1.5,2) {};
-            \node[cont] (h2) at (3,2) {$h_2$};
-            \node[fact, label=above: $\phi_3$] (f3) at (4.5,2) {};
-            \node[cont] (h3) at (6,2) {$h_3$};
-            \node[fact, label=above: $\phi_4$] (f4) at (7.5,2) {};
-            \node[cont] (h4) at (9,2) {$h_4$};
-            \draw(f1) -- (h1);
-            \draw(h1)--(f2);
-            \draw(f2)--(h2);
-            \draw(h2)--(f3);
-            \draw(f3)--(h3);
-            \draw(h3)--(f4);
-            \draw(f4)--(h4);
-        \end{tikzpicture}}
-      \end{center}
-      Combining the emission distributions $p(v_s|h_s)$ (and marginal
-      $p(h_1)$) with the transition distributions $p(h_s|h_{s-1})$ we
-      obtain the factors
-       \begin{align}
-         \phi_1(h_1) & = p(h_1) p(v_1|h_1)\\
-         \phi_s(h_{s-1}, h_s) &= p(h_s|h_{s-1})p(v_s|h_s) \quad \text{for } t=2, \ldots, n
-       \end{align}
-       We see from the factor tree that $h_{t-1}$ and $h_t$ are
-       neighbours, being attached to the same factor node
-       $\phi_t(h_{t-1}, h_t)$, e.g. $\phi_3$ in case of $p(h_{2}, h_3 | v_{1:4})$.
-
-       By the rules of message passing, the joint $p(h_{t-1}, h_{t} |
-       v_{1:n})$ is thus proportional to $\phi_t$ times the messages
-       into $\phi_t$. The following graph shows the messages for the
-       case of $p(h_{2}, h_3 | v_{1:4})$.
-       \begin{center}
-         \scalebox{1}{
-           \begin{tikzpicture}[ugraph]         
-             \node[fact, label=above: $\phi_1$] (f1) at (-1.5,2) {};
-             \node[cont] (h1) at (0,2) {$h_1$};
-             \node[fact, label=above: $\phi_2$] (f2) at (1.5,2) {};
-             \node[cont] (h2) at (3,2) {$h_2$};
-             \node[fact, label=above: $\phi_3$] (f3) at (4.5,2) {};
-             \node[cont] (h3) at (6,2) {$h_3$};
-             \node[fact, label=above: $\phi_4$] (f4) at (7.5,2) {};
-             \node[cont] (h4) at (9,2) {$h_4$};
-             \draw(f1) -- (h1);
-             \draw(h1)--(f2);
-             \draw(f2)--(h2);
-             \draw(h2)--(f3) node[midway,above,sloped] {$\rightarrow$};
-             \draw(f3)--(h3) node[midway,above,sloped] {$\leftarrow$}; 
-             \draw(h3)--(f4);
-             \draw(f4)--(h4);
-         \end{tikzpicture}}
-       \end{center}
-       Since the variable nodes only receive single messages from any
-       direction, they copy the messages so that the messages into
-       $\phi_t$ are given by $\alpha(h_{t-1})$ and $\beta(h_t)$ shown
-       below in red and blue, respectively.
-       \begin{center}
-         \scalebox{1}{
-           \begin{tikzpicture}[ugraph]         
-             \node[fact, label=above: $\phi_1$] (f1) at (-1.5,2) {};
-             \node[cont] (h1) at (0,2) {$h_1$};
-             \node[fact, label=above: $\phi_2$] (f2) at (1.5,2) {};
-             \node[cont] (h2) at (3,2) {$h_2$};
-             \node[fact, label=above: $\phi_3$] (f3) at (4.5,2) {};
-             \node[cont] (h3) at (6,2) {$h_3$};
-             \node[fact, label=above: $\phi_4$] (f4) at (7.5,2) {};
-             \node[cont] (h4) at (9,2) {$h_4$};
-             \draw(f1) -- (h1);
-             \draw(h1)--(f2);
-             \draw(f2)--(h2) node[midway,above,sloped] {\red{$\rightarrow$}};
-             \draw(h2)--(f3);
-             \draw(f3)--(h3);
-             \draw(h3)--(f4) node[midway,above,sloped] {\blue{$\leftarrow$}}; 
-             \draw(f4)--(h4);
-         \end{tikzpicture}}
-       \end{center}
-       Hence, 
-       \begin{align}
-         p(h_{t-1}, h_t| v_{1:n}) &\propto \alpha(h_{t-1}) \beta(h_t) \phi_t(h_{t-1}, h_t)\\
-         &\propto \alpha(h_{t-1}) \beta(h_t) p(h_t|h_{t-1}) p(v_t|h_t)
-       \end{align}
-       which is the result that we want to show.
-    \end{solution}
-
-
-  \item Show that $p(h_{t-1}|h_t, v_{1:n}) = \frac{\alpha(h_{t-1})}{\alpha(h_t)} p(h_t|h_{t-1}) p(v_t|h_t)$.
-   
-    \begin{solution}
-      The conditional $p(h_{t-1}|h_t, v_{1:n})$ can be written as the ratio
-      \begin{equation}
-        p(h_{t-1}|h_t, v_{1:n}) = \frac{p(h_{t-1}, h_t| v_{1:n})}{p(h_t|v_{1:n})}.
-      \end{equation}
-      Above, we have shown that the numerator satisfies
-      \begin{equation}
-        p(h_{t-1}, h_t| v_{1:n}) \propto \alpha(h_{t-1}) \beta(h_t) p(h_t|h_{t-1}) p(v_t|h_t).
-      \end{equation}
-      The denominator $p(h_t|v_{1:n})$ is proportional to $\alpha(h_t)
-      \beta(h_t)$ since it is the smoothing distribution than can be
-      determined via the alpha-beta recursion.
-
-      Normally, we needed to sum the messages over all values of
-      $(h_{t-1},h_t)$ to find the normalising constant of the
-      numerator. For the denominator, we had to sum over all values of
-      $h_t$. Next, I will argue qualitatively that this summation is
-      not needed; the normalising constants are both equal to
-      $p(v_{1:t})$. A more mathematical argument is given below.
-
-      We started with a factor graph and factors that represent the
-      joint $p(h_{1:n}, v_{1:n})$. The conditional $p(h_{1:n},
-      v_{1:n})$ equals
-      \begin{equation}
-        \label{eq:h-given-v-hmm}
-        p(h_{1:n} | v_{1:n}) = \frac{p(h_{1:n}, v_{1:n})}{p(v_{1:n})}
-      \end{equation}
-      Message passing is variable elimination. Hence, when computing
-      $p(h_t|v_{1:n})$ as $\alpha(h_t) \beta(h_t)$ from a factor graph
-      for $p(h_{1:n}, v_{1:n})$, we only need to divide by
-      $p(v_{1:n})$ for normalisation; explicitly summing out $h_t$ is
-      not needed. In other words,
-      \begin{equation}
-        p(h_t|v_{1:n}) =  \frac{\alpha(h_t) \beta(h_t)}{p(v_{1:n})}.
-      \end{equation}
-      Similarly, $p(h_{t-1}, h_t|v_{1:n})$ is also obtained from
-      \eqref{eq:h-given-v-hmm} by marginalisation/variable
-      elimination. Again, when computing $p(h_{t-1}, h_t|v_{1:n})$ as
-      $\alpha(h_{t-1}) \beta(h_t) p(h_t|h_{t-1}) p(v_t|h_t)$ from a
-      factor graph for $p(h_{1:n}, v_{1:n})$, we do not need to
-      explicitly sum over all values of $h_t$ and $h_{t-1}$ for
-      normalisation. The definition of the factors in the factor graph
-      together with \eqref{eq:h-given-v-hmm} shows that we can simply
-      divide by $p(v_{1:n})$. This gives
-      \begin{align}
-        p(h_{t-1}, h_t| v_{1:n}) & = \frac{1}{p(v_{1:n})} \alpha(h_{t-1}) \beta(h_t) p(h_t|h_{t-1}) p(v_t|h_t).
-      \end{align}
-
-      The desired conditional thus is
-      \begin{align}
-        p(h_{t-1} | h_t, v_{1:n}) & = \frac{p(h_{t-1}, h_t| v_{1:n})}{p(h_t|v_{1:n})} \\
-        & = \frac{\alpha(h_{t-1}) \beta(h_t) p(h_t|h_{t-1}) p(v_t|h_t)}{\alpha(h_t) \beta(h_t)}\\
-        & = \frac{\alpha(h_{t-1}) p(h_t|h_{t-1}) p(v_t|h_t)}{\alpha(h_t)}
-      \end{align}
-      which is the result that we wanted to show. Note that
-      $\beta(h_t)$ cancels out and that $p(h_{t-1} | h_t, v_{1:n})$
-      only involves the $\alpha$'s, the (forward) transition
-      distribution $p(h_t|h_{t-1})$ and the emission distribution at
-      time $t$.
-
-      \emph{Alternative solution:} An alternative, mathematically rigorous
-      solution is as follows.  The conditional $p(h_{t-1}|h_t,
-      v_{1:n})$ can be written as the ratio
-      \begin{equation}
-        p(h_{t-1}|h_t, v_{1:n}) = \frac{p(h_{t-1}, h_t| v_{1:n})}{p(h_t|v_{1:n})}.
-      \end{equation}
-      We first determine the denominator. From the properties of the
-      alpha and beta recursion, we know that
-      \begin{align}
-        \alpha(h_{t}) &= p(h_{t}, v_{1:t}) & \beta(h_t) = p(v_{t+1:n}|h_t)
-      \end{align}
-      Using that $v_{t+1:n} \independent v_{1:t} | h_t$, we can thus
-      express the denominator $p(h_t|v_{1:n})$ as
-      \begin{align}
-        p(h_t|v_{1:n}) &= \frac{p(h_t, v_{1:n})}{p(v_{1:n})}\\
-        & = \frac{p(h_t, v_{1:t}) p(v_{t+1:n}|h_t)}{p(v_{1:n})}\\
-        & = \frac{\alpha(h_t) \beta(h_t)}{p(v_{1:n})}
-      \end{align}
-      
-      For the numerator, we have
-      \begin{align}
-        p(h_{t-1},h_t | v_{1:n}) & =  \frac{p(h_{t-1},h_t, v_{1:n})}{p(v_{1:n})} \\
-        & = \frac{p(h_{t-1}, v_{1:t-1}, h_t, v_{t:n})}{p(v_{1:n})} \\
-        & = \frac{p(h_{t-1}, v_{1:t-1}) p(h_t, v_{t:n} | h_{t-1}, v_{1:t-1})}{p(v_{1:n})} \\
-        & = \frac{p(h_{t-1}, v_{1:t-1}) p(h_t, v_{t:n} | h_{t-1})}{p(v_{1:n})} \quad \quad \text{\small (using $h_t, v_{1:t} \independent v_{1:t-1} | h_{t-1}$)}\\
-        & = \frac{\alpha(h_{t-1}) p(h_t, v_{t:n} | h_{t-1})}{p(v_{1:n})} \quad \quad \text{\small (using $\alpha(h_{t-1}) = p(h_{t-1}, v_{1:t-1})$)}
-      \end{align}
-      With the product rule, we have  $p(h_t, v_{t:n} | h_{t-1}) =  p(v_t|h_t, h_{t-1}, v_{t+1:n}) p(h_t, v_{t+1:n} | h_{t-1})$ so that
-      \begin{align}   
-  p(h_{t-1},h_t | v_{1:n})& = \frac{\alpha(h_{t-1}) p(v_t|h_t, h_{t-1}, v_{t+1:n}) p(h_t, v_{t+1:n} | h_{t-1})}{p(v_{1:n})}\\
-       & = \frac{\alpha(h_{t-1}) p(v_t|h_t) p(h_t, v_{t+1:n} | h_{t-1})}{p(v_{1:n})} \quad \quad \text{\small (using $v_t \independent h_{t-1}, v_{t+1:n} |h_t$)}\\
-        & = \frac{\alpha(h_{t-1}) p(v_t|h_t) p(h_t | h_{t-1}) p(v_{t+1:n} | h_{t-1}, h_t)}{p(v_{1:n})} 
-        \end{align}
-        Hence
+        Como todas as vis\'iveis est\~ao no conjunto de condicionamento, i.e.\ assumidas
+        como observadas, podemos representar o modelo condicional $p(h_1, \ldots,
+        h_n|v_{1:n})$ como uma \'arvore de fatores em cadeia, por exemplo, no caso
+        de $n=4$:
+        \begin{center}
+            \scalebox{1}{
+                \begin{tikzpicture}[ugraph]          
+                    \node[fact, label=above: $\phi_1$] (f1) at (-1.5,2) {};
+                    \node[cont] (h1) at (0,2) {$h_1$};
+                    \node[fact, label=above: $\phi_2$] (f2) at (1.5,2) {};
+                    \node[cont] (h2) at (3,2) {$h_2$};
+                    \node[fact, label=above: $\phi_3$] (f3) at (4.5,2) {};
+                    \node[cont] (h3) at (6,2) {$h_3$};
+                    \node[fact, label=above: $\phi_4$] (f4) at (7.5,2) {};
+                    \node[cont] (h4) at (9,2) {$h_4$};
+                    \draw(f1) -- (h1);
+                    \draw(h1)--(f2);
+                    \draw(f2)--(h2);
+                    \draw(h2)--(f3);
+                    \draw(f3)--(h3);
+                    \draw(h3)--(f4);
+                    \draw(f4)--(h4);
+            \end{tikzpicture}}
+        \end{center}
+        Combinando as distribui\'c\~oes de emiss\~ao $p(v_s|h_s)$ (e a marginal
+        $p(h_1)$) com as distribui\'c\~oes de transi\'c\~ao $p(h_s|h_{s-1})$,
+        obtemos os fatores:
         \begin{align}
-       p(h_{t-1},h_t | v_{1:n}) & = \frac{\alpha(h_{t-1}) p(v_t|h_t) p(h_t | h_{t-1}) p(v_{t+1:n} | h_t)}{p(v_{1:n})} \quad \quad \text{\small (using $v_{t+1:n} \independent h_{t-1} | h_t$)}\\
-& = \frac{\alpha(h_{t-1}) p(v_t|h_t) p(h_t | h_{t-1}) \beta(h_t)}{p(v_{1:n})} \quad \quad \text{\small (using $\beta(h_t) = p(v_{t+1:n}|h_t)$)}
-      \end{align}
-
-      The desired conditional thus is
-      \begin{align}
-        p(h_{t-1} | h_t, v_{1:n}) & = \frac{p(h_{t-1}, h_t| v_{1:n})}{p(h_t|v_{1:n})} \\
-        & = \frac{\alpha(h_{t-1}) \beta(h_t) p(h_t|h_{t-1}) p(v_t|h_t)}{\alpha(h_t) \beta(h_t)}\\
-        & = \frac{\alpha(h_{t-1}) p(h_t|h_{t-1}) p(v_t|h_t)}{\alpha(h_t)}
-      \end{align}
-      which is the result that we wanted to show.
+            \phi_1(h_1) & = p(h_1) p(v_1|h_1)\\
+            \phi_s(h_{s-1}, h_s) &= p(h_s|h_{s-1})p(v_s|h_s) \quad \text{para } t=2, \ldots, n
+        \end{align}
+        Vemos pela \'arvore de fatores que $h_{t-1}$ e $h_t$ s\~ao
+        vizinhos, estando anexados ao mesmo n\'o de fator
+        $\phi_t(h_{t-1}, h_t)$, por exemplo $\phi_3$ no caso de $p(h_{2}, h_3 | v_{1:4})$.
+        
+        Pelas regras de passagem de mensagens, a conjunta $p(h_{t-1}, h_{t} |
+        v_{1:n})$ \'e proporcional a $\phi_t$ vezes as mensagens
+        que entram em $\phi_t$. O grafo seguinte mostra as mensagens para o
+        caso de $p(h_{2}, h_3 | v_{1:4})$.
+        \begin{center}
+            \scalebox{1}{
+                \begin{tikzpicture}[ugraph]          
+                    \node[fact, label=above: $\phi_1$] (f1) at (-1.5,2) {};
+                    \node[cont] (h1) at (0,2) {$h_1$};
+                    \node[fact, label=above: $\phi_2$] (f2) at (1.5,2) {};
+                    \node[cont] (h2) at (3,2) {$h_2$};
+                    \node[fact, label=above: $\phi_3$] (f3) at (4.5,2) {};
+                    \node[cont] (h3) at (6,2) {$h_3$};
+                    \node[fact, label=above: $\phi_4$] (f4) at (7.5,2) {};
+                    \node[cont] (h4) at (9,2) {$h_4$};
+                    \draw(f1) -- (h1);
+                    \draw(h1)--(f2);
+                    \draw(f2)--(h2);
+                    \draw(h2)--(f3) node[midway,above,sloped] {$\rightarrow$};
+                    \draw(f3)--(h3) node[midway,above,sloped] {$\leftarrow$}; 
+                    \draw(h3)--(f4);
+                    \draw(f4)--(h4);
+            \end{tikzpicture}}
+        \end{center}
+        Como os n\'os de vari\'avel recebem apenas mensagens \'unicas de qualquer
+        dire\'c\~ao, eles copiam as mensagens, de modo que as mensagens que entram em
+        $\phi_t$ s\~ao dadas por $\alpha(h_{t-1})$ e $\beta(h_t)$, mostradas
+        abaixo em vermelho e azul, respectivamente.
+        \begin{center}
+            \scalebox{1}{
+                \begin{tikzpicture}[ugraph]          
+                    \node[fact, label=above: $\phi_1$] (f1) at (-1.5,2) {};
+                    \node[cont] (h1) at (0,2) {$h_1$};
+                    \node[fact, label=above: $\phi_2$] (f2) at (1.5,2) {};
+                    \node[cont] (h2) at (3,2) {$h_2$};
+                    \node[fact, label=above: $\phi_3$] (f3) at (4.5,2) {};
+                    \node[cont] (h3) at (6,2) {$h_3$};
+                    \node[fact, label=above: $\phi_4$] (f4) at (7.5,2) {};
+                    \node[cont] (h4) at (9,2) {$h_4$};
+                    \draw(f1) -- (h1);
+                    \draw(h1)--(f2);
+                    \draw(f2)--(h2) node[midway,above,sloped] {\red{$\rightarrow$}};
+                    \draw(h2)--(f3);
+                    \draw(f3)--(h3);
+                    \draw(h3)--(f4) node[midway,above,sloped] {\blue{$\leftarrow$}}; 
+                    \draw(f4)--(h4);
+            \end{tikzpicture}}
+        \end{center}
+        Portanto, 
+        \begin{align}
+            p(h_{t-1}, h_t| v_{1:n}) &\propto \alpha(h_{t-1}) \beta(h_t) \phi_t(h_{t-1}, h_t)\\
+            &\propto \alpha(h_{t-1}) \beta(h_t) p(h_t|h_{t-1}) p(v_t|h_t)
+        \end{align}
+        que \'e o resultado que desejamos mostrar.
     \end{solution}
-
-    We thus obtain the following algorithm to generate samples from
+    
+    
+    \item Mostre que $p(h_{t-1}|h_t, v_{1:n}) = \frac{\alpha(h_{t-1})}{\alpha(h_t)} p(h_t|h_{t-1}) p(v_t|h_t)$.
+    
+    \begin{solution}
+        A condicional $p(h_{t-1}|h_t, v_{1:n})$ pode ser escrita como a raz\~ao:
+        \begin{equation}
+            p(h_{t-1}|h_t, v_{1:n}) = \frac{p(h_{t-1}, h_t| v_{1:n})}{p(h_t|v_{1:n})}.
+        \end{equation}
+        Acima, mostramos que o numerador satisfaz:
+        \begin{equation}
+            p(h_{t-1}, h_t| v_{1:n}) \propto \alpha(h_{t-1}) \beta(h_t) p(h_t|h_{t-1}) p(v_t|h_t).
+        \end{equation}
+        O denominador $p(h_t|v_{1:n})$ \'e proporcional a $\alpha(h_t)
+        \beta(h_t)$, j\'a que \'e a distribui\'c\~ao de suaviza\'c\~ao que pode ser
+        determinada via recurs\~ao alfa-beta.
+        
+        Normalmente, precisar\'iamos somar as mensagens sobre todos os valores de
+        $(h_{t-1},h_t)$ para encontrar a constante de normaliza\'c\~ao do
+        numerador. Para o denominador, ter\'iamos que somar sobre todos os valores de
+        $h_t$. A seguir, argumento qualitativamente que essa soma n\~ao
+        \'e necess\'aria; as constantes de normaliza\'c\~ao s\~ao ambas iguais a
+        $p(v_{1:n})$.
+        
+        Come\'camos com um grafo de fatores e fatores que representam a
+        conjunta $p(h_{1:n}, v_{1:n})$. A condicional $p(h_{1:n} | v_{1:n})$ \'e igual a:
+        \begin{equation}
+            \label{eq:h-given-v-hmm-alt}
+            p(h_{1:n} | v_{1:n}) = \frac{p(h_{1:n}, v_{1:n})}{p(v_{1:n})}
+        \end{equation}
+        A passagem de mensagens \'e elimina\'c\~ao de vari\'aveis. Portanto, ao computar
+        $p(h_t|v_{1:n})$ como $\alpha(h_t) \beta(h_t)$ de um grafo de fatores para
+        $p(h_{1:n}, v_{1:n})$, s\'o precisamos dividir por
+        $p(v_{1:n})$ para a normaliza\'c\~ao; a soma expl\'icita sobre $h_t$ n\~ao \'e
+        necess\'aria. Em outras palavras,
+        \begin{equation}
+            p(h_t|v_{1:n}) =  \frac{\alpha(h_t) \beta(h_t)}{p(v_{1:n})}.
+        \end{equation}
+        Similarmente, $p(h_{t-1}, h_t|v_{1:n})$ tamb\'em \'e obtida de
+        \eqref{eq:h-given-v-hmm-alt} por marginaliza\'c\~ao/elimina\'c\~ao de vari\'aveis.
+        Novamente, ao computar $p(h_{t-1}, h_t|v_{1:n})$ como
+        $\alpha(h_{t-1}) \beta(h_t) p(h_t|h_{t-1}) p(v_t|h_t)$ de um
+        grafo de fatores para $p(h_{1:n}, v_{1:n})$, n\~ao precisamos
+        somar explicitamente sobre todos os valores de $h_t$ e $h_{t-1}$ para
+        normaliza\'c\~ao. A defini\'c\~ao dos fatores no grafo de fatores
+        juntamente com \eqref{eq:h-given-v-hmm-alt} mostra que podemos simplesmente
+        dividir por $p(v_{1:n})$. Isso resulta em:
+        \begin{align}
+            p(h_{t-1}, h_t| v_{1:n}) & = \frac{1}{p(v_{1:n})} \alpha(h_{t-1}) \beta(h_t) p(h_t|h_{t-1}) p(v_t|h_t).
+        \end{align}
+        
+        A condicional desejada \'e, portanto:
+        \begin{align}
+            p(h_{t-1} | h_t, v_{1:n}) & = \frac{p(h_{t-1}, h_t| v_{1:n})}{p(h_t|v_{1:n})} \\
+            & = \frac{\alpha(h_{t-1}) \beta(h_t) p(h_t|h_{t-1}) p(v_t|h_t)}{\alpha(h_t) \beta(h_t)}\\
+            & = \frac{\alpha(h_{t-1}) p(h_t|h_{t-1}) p(v_t|h_t)}{\alpha(h_t)}
+        \end{align}
+        que \'e o resultado que quer\'iamos mostrar. Note que
+        $\beta(h_t)$ cancela-se e que $p(h_{t-1} | h_t, v_{1:n})$
+        envolve apenas os $\alpha$'s, a distribui\'c\~ao de transi\'c\~ao (forward)
+        $p(h_t|h_{t-1})$ e a distribui\'c\~ao de emiss\~ao no tempo $t$.
+    \end{solution}
+    
+    Obtemos, assim, o seguinte algoritmo para gerar amostras de
     $p(h_1, \ldots, h_n|v_{1:n})$:
     \begin{enumerate}
-    \item Run the alpha-recursion (filtering) to determine all
-      $\alpha(h_t)$ forward in time for $t=1, \ldots, n$.
-    \item Sample $h_n$ from $p(h_n | v_{1:n}) \propto \alpha(h_n)$
-    \item Go backwards in time using
-      \begin{equation}
-        p(h_{t-1}|h_t, v_{1:n}) = \frac{\alpha(h_{t-1})}{\alpha(h_t)} p(h_t|h_{t-1}) p(v_t|h_t)
-      \end{equation}
-      to generate samples $h_{t-1}|h_t, v_{1:n}$ for $t=n, \ldots, 2$.
+        \item Execute a recurs\~ao alfa (filtragem) para determinar todos os
+        $\alpha(h_t)$ para frente no tempo, de $t=1, \ldots, n$.
+        \item Amostre $h_n$ de $p(h_n | v_{1:n}) \propto \alpha(h_n)$.
+        \item Volte no tempo usando
+        \begin{equation}
+            p(h_{t-1}|h_t, v_{1:n}) = \frac{\alpha(h_{t-1})}{\alpha(h_t)} p(h_t|h_{t-1}) p(v_t|h_t)
+        \end{equation}
+        para gerar amostras de $h_{t-1}|h_t, v_{1:n}$ para $t=n, \ldots, 2$.
     \end{enumerate}
-    This algorithm is known as forward filtering backward sampling (FFBS). 
+    Este algoritmo \'e conhecido como forward filtering backward sampling (FFBS). 
     
 \end{exenumerate}
 
 
 % ----------------------------------------
 
- \ex{Prediction exercise}
- 
- Consider a hidden Markov model with three visibles $v_1, v_2, v_3$
- and three hidden variables $h_1, h_2, h_3$ which can be represented
- with the following factor graph:
- 
- \begin{center}
-   \scalebox{0.9}{
-     \begin{tikzpicture}[ugraph,minimum size=1cm, inner sep=3pt]
-       \node[cont] (v1) at (0,0) {$v_1$};
-       \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: $p(v_1 | h_1)$}] (fv1) at (0,1) {};
-       \node[cont] (v2) at (3,0) {$v_2$};
-       \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: $p(v_2 | h_2)$}] (fv2) at (3,1) {};
-       \node[cont] (v3) at (6,0) {$v_3$};
-       \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: $p(v_3 | h_3)$}] (fv3) at (6,1) {};
-       
-       \node[fact, label=left: $p(h_1)$] (f1) at (-1.5,2) {};
-       \node[cont] (h1) at (0,2) {$h_1$};
-       \node[fact, label={[label distance=-7pt]above: $p(h_2 | h_1)$}] (f2) at (1.5,2) {};
-       \node[cont] (h2) at (3,2) {$h_2$};
-       \node[fact, label={[label distance=-7pt]above: $p(h_3 | h_2)$}] (f3) at (4.5,2) {};
-       \node[cont] (h3) at (6,2) {$h_3$};
+\ex{Exerc\'icio de predi\'c\~ao}
 
-       \draw(h1)--(v1);
-       \draw(h2)--(v2);
-       \draw(h3)--(v3);
-       \draw(h1)--(h2);
-       \draw(h2)--(h3);
-       \draw(f1) -- (h1);
-       
-   \end{tikzpicture}}
- \end{center}
- This question is about computing the predictive probability $p(v_3=1 | v_1 =1)$.
+Considere um modelo oculto de Markov com tr\^es vis\'iveis $v_1, v_2, v_3$
+e tr\^es vari\'aveis ocultas $h_1, h_2, h_3$, que podem ser representadas
+com o seguinte grafo de fatores:
+
+\begin{center}
+    \scalebox{0.9}{
+        \begin{tikzpicture}[ugraph,minimum size=1cm, inner sep=3pt]
+            \node[cont] (v1) at (0,0) {$v_1$};
+            \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: $p(v_1 | h_1)$}] (fv1) at (0,1) {};
+            \node[cont] (v2) at (3,0) {$v_2$};
+            \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: $p(v_2 | h_2)$}] (fv2) at (3,1) {};
+            \node[cont] (v3) at (6,0) {$v_3$};
+            \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: $p(v_3 | h_3)$}] (fv3) at (6,1) {};
+            
+            \node[fact, label=left: $p(h_1)$] (f1) at (-1.5,2) {};
+            \node[cont] (h1) at (0,2) {$h_1$};
+            \node[fact, label={[label distance=-7pt]above: $p(h_2 | h_1)$}] (f2) at (1.5,2) {};
+            \node[cont] (h2) at (3,2) {$h_2$};
+            \node[fact, label={[label distance=-7pt]above: $p(h_3 | h_2)$}] (f3) at (4.5,2) {};
+            \node[cont] (h3) at (6,2) {$h_3$};
+            
+            \draw(h1)--(v1);
+            \draw(h2)--(v2);
+            \draw(h3)--(v3);
+            \draw(h1)--(h2);
+            \draw(h2)--(h3);
+            \draw(f1) -- (h1);
+            
+    \end{tikzpicture}}
+\end{center}
+Esta quest\~ao trata do c\'alculo da probabilidade preditiva $p(v_3=1 | v_1 =1)$.
 
 \begin{exenumerate}
-  
-\item The factor graph below represents $p(h_1, h_2, h_3, v_2, v_3
-  \mid v_1 =1)$. Provide an equation that defines $\phi_A$ in terms of
-  the factors in the factor graph above. 
-
-  \begin{center}
-    \scalebox{0.9}{
-      \begin{tikzpicture}[ugraph,minimum size=1cm, inner sep=3pt]
-        \node[cont] (v2) at (3,0) {$v_2$};
-        \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: $p(v_2 | h_2)$}] (fv2) at (3,1) {};
-        \node[cont] (v3) at (6,0) {$v_3$};
-        \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: $p(v_3 | h_3)$}] (fv3) at (6,1) {};
-        
-        \node[cont] (h1) at (0,2) {$h_1$};
-        \node[fact, label={[label distance=-7pt]above: $\phi_A$}] (f2) at (1.5,2) {};
-        \node[cont] (h2) at (3,2) {$h_2$};
-        \node[fact, label={[label distance=-7pt]above: $p(h_3 | h_2)$}] (f3) at (4.5,2) {};
-        \node[cont] (h3) at (6,2) {$h_3$};
-        
-        \draw(h2)--(v2);
-        \draw(h3)--(v3);
-        \draw(h1)--(h2);
-        \draw(h2)--(h3);
+    
+    \item O grafo de fatores abaixo representa $p(h_1, h_2, h_3, v_2, v_3
+    \mid v_1 =1)$. Forne\'ca uma equa\'c\~ao que defina $\phi_A$ em termos dos
+    fatores no grafo de fatores acima. 
+    
+    \begin{center}
+        \scalebox{0.9}{
+            \begin{tikzpicture}[ugraph,minimum size=1cm, inner sep=3pt]
+                \node[cont] (v2) at (3,0) {$v_2$};
+                \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: $p(v_2 | h_2)$}] (fv2) at (3,1) {};
+                \node[cont] (v3) at (6,0) {$v_3$};
+                \node[fact, label={[xshift=0.1cm,  yshift=0cm]left: $p(v_3 | h_3)$}] (fv3) at (6,1) {};
                 
-    \end{tikzpicture}}
-  \end{center}
-
-  \begin{solution}
+                \node[cont] (h1) at (0,2) {$h_1$};
+                \node[fact, label={[label distance=-7pt]above: $\phi_A$}] (f2) at (1.5,2) {};
+                \node[cont] (h2) at (3,2) {$h_2$};
+                \node[fact, label={[label distance=-7pt]above: $p(h_3 | h_2)$}] (f3) at (4.5,2) {};
+                \node[cont] (h3) at (6,2) {$h_3$};
+                
+                \draw(h2)--(v2);
+                \draw(h3)--(v3);
+                \draw(h1)--(h2);
+                \draw(h2)--(h3);
+                
+        \end{tikzpicture}}
+    \end{center}
     
-    $\phi_A(h_1, h_2) \propto p(v_1 | h_1) p(h_1) p(h_2 | h_1)$ with $v_1=1$.
+    \begin{solution}
+        $\phi_A(h_1, h_2) \propto p(v_1 | h_1) p(h_1) p(h_2 | h_1)$ com $v_1=1$.
+    \end{solution}
     
-  \end{solution}
-  
-\item Assume further that all variables are
-  binary, $h_i \in \{0,1\}$, $v_i \in \{0,1\}$; that $p(h_1=1)=0.5$, and that the transition and emission distributions are, for all $i$, given by:
-
-  \begin{center}
-    \begin{tabular}{lll}
-      \toprule
-      $p(h_{i+1}|h_i)$ & $h_{i+1}$ &$h_i$ \\
-      \midrule
-      0 & 0 & 0\\
-      1 & 1 & 0\\
-      1 & 0 & 1\\
-      0 & 1 & 1\\
-      \bottomrule
-    \end{tabular}
-    \hspace{5ex}
-    \begin{tabular}{lll}
-      \toprule
-      $p(v_i|h_i)$ & $v_i$ &$h_i$ \\
-      \midrule
-      0.6 & 0 & 0\\
-      0.4 & 1 & 0\\
-      0.4 & 0 & 1\\
-      0.6 & 1 & 1\\
-      \bottomrule
-    \end{tabular}
-  \end{center}
-  Compute the numerical values of the factor $\phi_A$.
-
-  \begin{solution}
-
-
-  \item Given the definition of the transition and emission
-    probabilities, we have $\phi_A(h_1,h_2) = 0$ if $h_1=h_2$. For $h_1=0, h_2 =1$, we obtain
-    \begin{align}
-      \phi_A(h_1=0, h_2=1) &= p(v_1=1 | h_1=0) p(h_1=0) p(h_2=1 | h_1=0) \\
-      & = 0.4 \cdot 0.5 \cdot 1\\
-      & = \frac{4}{10} \cdot \frac{1}{2}\\
-      & = \frac{2}{10} = 0.2
-    \end{align}
-    For $h_1=1, h_2 =0$, we obtain
-    \begin{align}
-      \phi_A(h_1=1, h_2=0) &= p(v_1=1 | h_1=1) p(h_1=1) p(h_2=0 | h_1=1) \\
-      & = 0.6 \cdot 0.5 \cdot 1\\
-      & = \frac{6}{10} \cdot \frac{1}{2}\\
-      & = \frac{3}{10} =0.3
-    \end{align}
-    Hence
-     \begin{center}
-     \begin{tabular}{lll}
-      \toprule
-   $\phi_A(h_1, h_2)$ & $h_1$ &$h_2$ \\
-      \midrule
-      0 & 0 & 0\\
-      0.3 & 1 & 0\\
-      0.2 & 0 & 1\\
-      0 & 1 & 1\\
-      \bottomrule
-    \end{tabular}
-  \end{center}
+    \item Assuma, al\'em disso, que todas as vari\'aveis sejam
+    bin\'arias, $h_i \in \{0,1\}$, $v_i \in \{0,1\}$; que $p(h_1=1)=0.5$, e que as distribui\'c\~oes de transi\'c\~ao e emiss\~ao sejam, para todo $i$, dadas por:
     
-  \end{solution}
-
-\item  Denote the message from variable node $h_2$ to factor node $p(h_3 |
-  h_2)$ by $\alpha(h_2)$. Use message passing to compute $\alpha(h_2)$
-  for $h_2=0$ and $h_2=1$. Report the values of any intermediate
-  messages that need to be computed for the computation of
-  $\alpha(h_2)$.
-
-  \begin{solution}
+    \begin{center}
+        \begin{tabular}{lll}
+            \toprule
+            $p(h_{i+1}|h_i)$ & $h_{i+1}$ &$h_i$ \\
+            \midrule
+            0 & 0 & 0\\
+            1 & 1 & 0\\
+            1 & 0 & 1\\
+            0 & 1 & 1\\
+            \bottomrule
+        \end{tabular}
+        \hspace{5ex}
+        \begin{tabular}{lll}
+            \toprule
+            $p(v_i|h_i)$ & $v_i$ &$h_i$ \\
+            \midrule
+            0.6 & 0 & 0\\
+            0.4 & 1 & 0\\
+            0.4 & 0 & 1\\
+            0.6 & 1 & 1\\
+            \bottomrule
+        \end{tabular}
+    \end{center}
+    Calcule os valores num\'ericos do fator $\phi_A$.
     
-    The message from $h_1$ to $\phi_A$ is one. The message from
-    $\phi_A$ to $h_2$ is 
-    \begin{align}
-      \fxmess{\phi_A}{h_2}{1}(h_2=0) & = \sum_{h_1} \phi_A(h_1, h_2=0)\\
-      & = 0.3\\
-      \fxmess{\phi_A}{h_2}{1}(h_2=1) & = \sum_{h_1} \phi_A(h_1, h_2=1)\\
-      & = 0.2
-    \end{align}
+    \begin{solution}
+        Dada a defini\'c\~ao das probabilidades de transi\'c\~ao e emiss\~ao, temos $\phi_A(h_1,h_2) = 0$ se $h_1=h_2$. Para $h_1=0, h_2 =1$, obtemos:
+        \begin{align}
+            \phi_A(h_1=0, h_2=1) &= p(v_1=1 | h_1=0) p(h_1=0) p(h_2=1 | h_1=0) \\
+            & = 0.4 \cdot 0.5 \cdot 1\\
+            & = \frac{4}{10} \cdot \frac{1}{2}\\
+            & = \frac{2}{10} = 0.2
+        \end{align}
+        Para $h_1=1, h_2 =0$, obtemos:
+        \begin{align}
+            \phi_A(h_1=1, h_2=0) &= p(v_1=1 | h_1=1) p(h_1=1) p(h_2=0 | h_1=1) \\
+            & = 0.6 \cdot 0.5 \cdot 1\\
+            & = \frac{6}{10} \cdot \frac{1}{2}\\
+            & = \frac{3}{10} = 0.3
+        \end{align}
+        Assim:
+        \begin{center}
+            \begin{tabular}{lll}
+                \toprule
+                $\phi_A(h_1, h_2)$ & $h_1$ &$h_2$ \\
+                \midrule
+                0 & 0 & 0\\
+                0.3 & 1 & 0\\
+                0.2 & 0 & 1\\
+                0 & 1 & 1\\
+                \bottomrule
+            \end{tabular}
+        \end{center}
+    \end{solution}
     
-    Since $v_2$ is not observed and $p(v_2|h_2)$ normalised, the message from $p(v_2|h_2)$ to $h_2$ equals one.
-
-    This means that the message from $h_2$ to $p(h_3 | h_2)$, which is
-    $\alpha(h_2)$ equals $\fxmess{\phi_A}{h_2}{1}(h_2)$, i.e.\ 
-    \begin{align}
-      \alpha(h_2=0) & = 0.3\\
-      \alpha(h_2=1) & = 0.2
-    \end{align}
-
-  \end{solution}
-  
-\item With $\alpha(h_2)$ defined as above, use message passing to show
-  that the predictive probability $p(v_3=1 | v_1=1)$ can be expressed in terms of $\alpha(h_2)$
-  as
-  \begin{equation}
-    p(v_3=1 | v_1=1) = \frac{ x \alpha(h_2=1) + y \alpha(h_2=0)}{\alpha(h_2=1)+\alpha(h_2=0)}
-  \end{equation}
-  and report the values of $x$ and $y$.  
-
-  \begin{solution}
-
+    \item Denomine a mensagem do n\'o de vari\'avel $h_2$ para o n\'o de fator $p(h_3 |
+    h_2)$ por $\alpha(h_2)$. Use passagem de mensagens para computar $\alpha(h_2)$
+    para $h_2=0$ e $h_2=1$. Relate os valores de quaisquer mensagens intermedi\'arias
+    que precisem ser computadas para o c\'alculo de $\alpha(h_2)$.
     
-    Given the definition of $p(h_3| h_2)$, the message $\fxmess{p(h_3|h_2)}{h_3}{1}(h_3)$ is
-    \begin{align}
-      \fxmess{p(h_3|h_2)}{h_3}{1}(h_3=0) & = \alpha(h_2 =1)\\
-      \fxmess{p(h_3|h_2)}{h_3}{1}(h_3=1) & = \alpha(h_2 =0)
-  \end{align}
+    \begin{solution}
+        A mensagem de $h_1$ para $\phi_A$ \'e um. A mensagem de
+        $\phi_A$ para $h_2$ \'e:
+        \begin{align}
+            \fxmess{\phi_A}{h_2}{1}(h_2=0) & = \sum_{h_1} \phi_A(h_1, h_2=0)\\
+            & = 0.3\\
+            \fxmess{\phi_A}{h_2}{1}(h_2=1) & = \sum_{h_1} \phi_A(h_1, h_2=1)\\
+            & = 0.2
+        \end{align}
+        Como $v_2$ n\~ao \'e observado e $p(v_2|h_2)$ \'e normalizado, a mensagem de $p(v_2|h_2)$ para $h_2$ \'e igual a um.
+        
+        Isso significa que a mensagem de $h_2$ para $p(h_3 | h_2)$, que \'e
+        $\alpha(h_2)$, \'e igual a $\fxmess{\phi_A}{h_2}{1}(h_2)$, i.e.\ 
+        \begin{align}
+            \alpha(h_2=0) & = 0.3\\
+            \alpha(h_2=1) & = 0.2
+        \end{align}
+    \end{solution}
     
-  The variable node $h_3$ copies the message so that we have
-  \begin{align}
-    \fxmess{p(v_3|h_3)}{v_3}{1}(v_3=0) & = \sum_{h_3} p(v_3=0 | h_3)  \fxmess{p(h_3|h_2)}{h_3}{1}(h_3) \\
-    & =  p(v_3=0 | h_3=0)  \alpha(h_2 =1) + p(v_3=0 | h_3=1)  \alpha(h_2 =0)\\
-    & = 0.6  \alpha(h_2 =1) + 0.4  \alpha(h_2 =0)\\
-    \fxmess{p(v_3|h_h3)}{v_3}{1}(v_3=1) & = \sum_{h_3} p(v_3=1 | h_3) ) \fxmess{p(h_3|h_2)}{h_3}{1}(h_3) \\
-    & = p(v_3=1 | h_3=0)  \alpha(h_2 =1) + p(v_3=1 | h_3=1)  \alpha(h_2 =0)\\
-    & = 0.4 \alpha(h_2=1) + 0.6 \alpha(h_2=0)
-  \end{align}
-
-  We thus have
-  \begin{align}
-    p(v_3 = 1| v_1=1) &=  \frac{0.4 \alpha(h_2=1) + 0.6 \alpha(h_2=0)}{ 0.4 \alpha(h_2=1) + 0.6 \alpha(h_2=0) +  0.6  \alpha(h_2 =1) + 0.4  \alpha(h_2 =0)}\\
-    & =  \frac{0.4 \alpha(h_2=1) + 0.6 \alpha(h_2=0)}{\alpha(h_2=1)+\alpha(h_2=0)}
-  \end{align}
-  The requested $x$ and $y$ are thus: $x =0.4$, $y=0.6$. 
-
+    \item Com $\alpha(h_2)$ definida como acima, use passagem de mensagens para mostrar
+    que a probabilidade preditiva $p(v_3=1 | v_1=1)$ pode ser expressa em termos de $\alpha(h_2)$
+    como:
+    \begin{equation}
+        p(v_3=1 | v_1=1) = \frac{ x \alpha(h_2=1) + y \alpha(h_2=0)}{\alpha(h_2=1)+\alpha(h_2=0)}
+    \end{equation}
+    e relate os valores de $x$ e $y$.  
     
-  \end{solution}
-  
-\item Compute the numerical value of $p(v_3 =1 | v_1=1)$.
-
-  
-  \begin{solution}
+    \begin{solution}
+        Dada a defini\'c\~ao de $p(h_3| h_2)$, a mensagem $\fxmess{p(h_3|h_2)}{h_3}{1}(h_3)$ \'e:
+        \begin{align}
+            \fxmess{p(h_3|h_2)}{h_3}{1}(h_3=0) & = \alpha(h_2 = 1)\\
+            \fxmess{p(h_3|h_2)}{h_3}{1}(h_3=1) & = \alpha(h_2 = 0)
+        \end{align}
+        O n\'o de vari\'avel $h_3$ copia a mensagem, de modo que temos:
+        \begin{align}
+            \fxmess{p(v_3|h_3)}{v_3}{1}(v_3=0) & = \sum_{h_3} p(v_3=0 | h_3)  \fxmess{p(h_3|h_2)}{h_3}{1}(h_3) \\
+            & =  p(v_3=0 | h_3=0)  \alpha(h_2 = 1) + p(v_3=0 | h_3=1)  \alpha(h_2 = 0)\\
+            & = 0.6  \alpha(h_2 = 1) + 0.4  \alpha(h_2 = 0)\\
+            \fxmess{p(v_3|h_3)}{v_3}{1}(v_3=1) & = \sum_{h_3} p(v_3=1 | h_3)  \fxmess{p(h_3|h_2)}{h_3}{1}(h_3) \\
+            & = p(v_3=1 | h_3=0)  \alpha(h_2 = 1) + p(v_3=1 | h_3=1)  \alpha(h_2 = 0)\\
+            & = 0.4 \alpha(h_2=1) + 0.6 \alpha(h_2=0)
+        \end{align}
+        
+        Temos, portanto:
+        \begin{align}
+            p(v_3 = 1| v_1=1) &=  \frac{0.4 \alpha(h_2=1) + 0.6 \alpha(h_2=0)}{ 0.4 \alpha(h_2=1) + 0.6 \alpha(h_2=0) +  0.6  \alpha(h_2 = 1) + 0.4  \alpha(h_2 = 0)}\\
+            & =  \frac{0.4 \alpha(h_2=1) + 0.6 \alpha(h_2=0)}{\alpha(h_2=1)+\alpha(h_2=0)}
+        \end{align}
+        Os valores solicitados de $x$ e $y$ s\~ao: $x = 0.4$, $y = 0.6$. 
+    \end{solution}
     
-    Inserting the numbers gives $\alpha(h_2=0)+\alpha(h_2=1) = 5/10 = 1/2$ so that
-    \begin{align}
-      p(v_3 = 1| v_1=1) &= \frac{0.4 \cdot 0.2 + 0.6 \cdot 0.3}{\frac{1}{2}}\\
-      &= 2\cdot \left( \frac{4}{10} \cdot \frac{2}{10} + \frac{6}{10} \frac{3}{10}\right)\\
-      &=  \frac{4}{10} \cdot \frac{4}{10} + \frac{6}{10} \frac{6}{10}\\
-      &= \frac{1}{100} (16+ 36)\\
-      &= \frac{1}{100} 52\\
-      & = \frac{52}{100} = 0.52
-    \end{align}
-
-  \end{solution}
-  
+    \item Calcule o valor num\'erico de $p(v_3 =1 | v_1=1)$.
+    
+    \begin{solution}
+        Inserindo os n\'umeros obtemos $\alpha(h_2=0)+\alpha(h_2=1) = 0.5 = 1/2$, de modo que:
+        \begin{align}
+            p(v_3 = 1| v_1=1) &= \frac{0.4 \cdot 0.2 + 0.6 \cdot 0.3}{\frac{1}{2}}\\
+            &= 2 \cdot (0.08 + 0.18)\\
+            &= 2 \cdot 0.26\\
+            &= 0.52
+        \end{align}
+    \end{solution}
+    
 \end{exenumerate}
-  
+
 
 % ----------------------------------
 
 
-\ex{Hidden Markov models and change of measure}
+\ex{Modelos ocultos de Markov e mudan\'ca de medida}
 
-We take here a change of measure perspective on the alpha-recursion.
+Adotamos aqui uma perspectiva de mudan\'ca de medida na recurs\~ao alfa.
 
-Consider the following directed graph for a hidden Markov model
-where the $y_i$ correspond to observed (visible) variables and the
-$x_i$ to unobserved (hidden/latent) variables.
+Considere o seguinte grafo direcionado para um modelo oculto de Markov
+onde os $y_i$ correspondem a vari\'aveis observadas (vis\'iveis) e os
+$x_i$ a vari\'aveis n\~ao observadas (ocultas/latentes).
 
 \begin{center}
-  \scalebox{1}{
-    \begin{tikzpicture}[dgraph]
-      \node[cont] (x1) at (0,2) {$x_1$};
-      \node[cont] (x2) at (2,2) {$x_2$};
-      \node[cont] (x3) at (4,2) {$x_3$};
-      \node       (a) at (6,2) {};
-      \node       (b) at (7,2) {$\ldots$};
-      \node       (c) at (7,0) {$\ldots$};
-      \node       (d) at (8,2) {};
-      \node[cont] (x4) at (10,2) {$x_n$};
-      \node[cont] (y1) at (0,0) {$y_1$};
-      \node[cont] (y2) at (2,0) {$y_2$};
-      \node[cont] (y3) at (4,0) {$y_3$};
-      \node[cont] (y4) at (10,0) {$y_n$};
-      \draw(x1)--(y1);\draw(x2)--(y2);\draw(x3)--(y3);\draw(x4)--(y4);
-      \draw(x1)--(x2);\draw(x2)--(x3);\draw(x3)--(a);\draw(d)--(x4);
-  \end{tikzpicture}}
+    \scalebox{1}{
+        \begin{tikzpicture}[dgraph]
+            \node[cont] (x1) at (0,2) {$x_1$};
+            \node[cont] (x2) at (2,2) {$x_2$};
+            \node[cont] (x3) at (4,2) {$x_3$};
+            \node       (a) at (6,2) {};
+            \node       (b) at (7,2) {$\ldots$};
+            \node       (c) at (7,0) {$\ldots$};
+            \node       (d) at (8,2) {};
+            \node[cont] (x4) at (10,2) {$x_n$};
+            \node[cont] (y1) at (0,0) {$y_1$};
+            \node[cont] (y2) at (2,0) {$y_2$};
+            \node[cont] (y3) at (4,0) {$y_3$};
+            \node[cont] (y4) at (10,0) {$y_n$};
+            \draw(x1)--(y1);\draw(x2)--(y2);\draw(x3)--(y3);\draw(x4)--(y4);
+            \draw(x1)--(x2);\draw(x2)--(x3);\draw(x3)--(a);\draw(d)--(x4);
+    \end{tikzpicture}}
 \end{center}
 
-The joint model for $\x=(x_1, \ldots, x_n)$ and $\y = (y_1, \ldots,
-y_n)$ thus is
- \begin{align}
-   p(\x,\y) = p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^n p(y_i|x_i).
- \end{align}
-
-
- \begin{exenumerate}
-
- \item Show that
-   \begin{equation}
-     p(x_1, \ldots, x_n, y_1, \ldots, y_t) =  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^t p(y_i|x_i)
-   \end{equation}
-   for $t=0, \ldots, n$. We take the case $t=0$ to correspond to $p(x_1, \ldots, x_n)$,
-   \begin{equation}
-     p(x_1, \ldots, x_n) =  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}).
-   \end{equation}
-   
-   \begin{solution}
-     The result follows by integrating/summing out $y_{t+1} \ldots n$.
-     \begin{align}
-       p(x_1, \ldots, x_n, y_1, \ldots, y_t) & = \int p(x_1, \ldots, x_n, y_1, \ldots, y_n) \ud y_{t+1} \ldots \ud y_n \\
-       & = \int  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^n p(y_i|x_i)\ud y_{t+1} \ldots \ud y_n \\
-       & =  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^t p(y_i|x_i) \int  \prod_{i=t+1}^n p(y_i|x_i)\ud y_{t+1} \ldots \ud y_n \\
-       &=  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^t p(y_i|x_i)   \prod_{i=t+1}^n \underbrace{\int p(y_i|x_i)\ud y_{i}}_{=1} \\
-       & =  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^t p(y_i|x_i)
-     \end{align}
-     The result for $p(x_1, \ldots, x_n)$ is obtained when we integrate out all
-     $y$'s.
-
-   \end{solution}
-
- \item Show that $p(x_1, \ldots, x_n | y_1, \ldots, y_t)$, $t=0,
-   \ldots, n$, factorises as
-\begin{equation}
-  p(x_1, \ldots, x_n | y_1, \ldots, y_t) \propto  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^t g_i(x_i)
-  \label{eq:HMM-conditional-factorisation}
-\end{equation}
-where $g_i(x_i) = p(y_i|x_i)$ for a fixed value of $y_i$, and that its normalising constant $Z_t$ equals the likelihood $p(y_1, \ldots, y_t)$
-
-\begin{solution}
-The result follows from the basic definition of the conditional
+O modelo conjunto para $\x=(x_1, \ldots, x_n)$ e $\y = (y_1, \ldots,
+y_n)$ \'e, portanto:
 \begin{align}
-  p(x_1, \ldots, x_n | y_1, \ldots, y_t) & = \frac{p(x_1, \ldots, x_n, y_1, \ldots, y_t)}{p(y_1, \ldots, y_t)}
+    p(\x,\y) = p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^n p(y_i|x_i).
 \end{align}
-together with the expression for $p(x_1, \ldots, x_n, y_1, \ldots, y_t)$ when the $y_i$ are kept fixed.
-\end{solution}
-
-\item Denote $ p(x_1, \ldots, x_n|y_1, \ldots, y_t)$ by $p_t(x_1,
-  \ldots, x_n)$. The index $t \le n$ thus indicates the time of the
-  last $y$-variable we are conditioning on. Show the following
-  recursion for $1 \le t \le n$:
-  \begin{align}
-    p_{t-1}(x_1, \ldots, x_t) &=
-    \begin{cases}
-      p(x_1) & \text{if } t=1\\
-      p_{t-1}(x_1, \ldots, x_{t-1}) p(x_t|x_{t-1}) & \text{otherwise}
-      \label{eq:HMM-extension}
-    \end{cases} && \text{\small (extension)}\\
-  p_{t}(x_1, \ldots, x_{t}) &= \frac{1}{Z_t} p_{t-1}(x_1, \ldots, x_t) g_t(x_t) \label{eq:HMM-change-of-measure} && \text{\small (change of measure)}\\
-  Z_t & = \int p_{t-1}(x_t) g_t(x_t) \ud x_t 
-\end{align}
-By iterating from $t=1$ to $t=n$, we can thus recursively compute
-$p(x_1, \ldots, x_n|y_1, \ldots, y_n)$, including its normalising
-constant $Z_n$, which equals the likelihood $ Z_n= p(y_1, \ldots, y_n)$ 
-
-\begin{solution}
-  We start with \eqref{eq:HMM-conditional-factorisation} which shows
-  that by definition of $p_t(x_1, \ldots, x_n)$ we have
-  \begin{align}
-    p_t(x_1, \ldots, x_n) & = p(x_1, \ldots, x_n | y_1, \ldots, y_t)\\
-    &\propto p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^t g_i(x_i)
-    \label{eq:HMM-conditional-factorisation-2} 
-  \end{align}
-  For $t=1$, we thus have
-  \begin{equation}
-    p_1(x_1, \ldots, x_n) \propto  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) g_1(x_1)
-  \end{equation}
-  Integrating out $x_2, \ldots, x_n$ gives
-  \begin{align}
-    p_1(x_1) & = \int p_1(x_1, \ldots, x_n) \ud x_2 \ldots \ud x_n\\
-    &\propto \int  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) g_1(x_1)\ud x_2 \ldots \ud x_n\\
-    &\propto p(x_1) g_1(x_1) \int  \prod_{i=2}^n p(x_i|x_{i-1})\ud x_2 \ldots \ud x_n\\
-    &\propto p(x_1) g_1(x_1) \underbrace{\prod_{i=2}^n \int p(x_i|x_{i-1})\ud x_i}_{=1}\\
-    &\propto p(x_1) g_1(x_1)
-  \end{align}
-
-  The normalising constant is
-  \begin{align}
-    Z_1 & = \int  p(x_1) g_1(x_1) \ud x_1
-  \end{align}
-  This establishes the result for $t=1$.
-
-  From \eqref{eq:HMM-conditional-factorisation}, we further have
-   \begin{align}
-     p_{t-1}(x_1, \ldots, x_n) & = p(x_1, \ldots, x_n | y_1, \ldots, y_{t-1})\\
-     &\propto p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^{t-1} g_i(x_i)
-   \end{align}
-   Integrating out $x_{t+1}, \ldots, x_n$ thus gives
-   \begin{align}
-     p_{t-1}(x_1, \ldots, x_t) & = \int p_{t-1}(x_1, \ldots, x_n) \ud x_{t+1} \ldots \ud x_n\\
-     &\propto \int p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^{t-1} g_i(x_i)\ud x_{t+1} \ldots \ud x_n\\
-     & \propto  p(x_1) \prod_{i=2}^t p(x_i|x_{i-1}) \prod_{i=1}^{t-1} g_i(x_i) \int \prod_{i=t+1}^n p(x_i|x_{i-1}) \ud x_{t+1} \ldots \ud x_n\\
-     & \propto  p(x_1) \prod_{i=2}^t p(x_i|x_{i-1}) \prod_{i=1}^{t-1} g_i(x_i) \prod_{i=t+1}^n \int p(x_i|x_{i-1}) \ud x_i\\
-     & \propto  p(x_1) \prod_{i=2}^t p(x_i|x_{i-1}) \prod_{i=1}^{t-1} g_i(x_i)
-   \end{align}
-    Noting that the product over the $g_i$ does not involve $x_t$ and
-    that $p(x_t | x_{t-1})$ is a pdf, we have further
-    \begin{align}
-      p_{t-1}(x_1, \ldots, x_{t-1}) &=\int  p_{t-1}(x_1, \ldots, x_t) \ud x_t\\
-      &  \propto p(x_1) \prod_{i=2}^{t-1} p(x_i|x_{i-1}) \prod_{i=1}^{t-1} g_i(x_i)
-    \end{align}
-    Hence
-    \begin{equation}
-      p_{t-1}(x_1, \ldots, x_t) =  p_{t-1}(x_1, \ldots, x_{t-1}) p(x_t|x_{t-1})
-    \end{equation}
-    Note that we can have an equal sign since $p(x_t|x_{t-1})$ is a
-    pdf and hence integrates to one. This is sometimes called the
-    ``extension'' since the inputs for $p_{t-1}$ are extended from
-    $(x_1, \ldots, x_{t-1})$ to $x_1, \ldots, x_t$.
-  
-    From \eqref{eq:HMM-conditional-factorisation-2}, we further have
-    \begin{align}
-      p_t(x_1, \ldots, x_n) & \propto  p_{t-1}(x_1, \ldots, x_n) g_t(x_t)
-    \end{align}
-    Integrating out $x_{t+1}, \ldots, x_n$ thus gives
-    \begin{align}
-      p_t(x_1, \ldots, x_t) & \propto  p_{t-1}(x_1, \ldots, x_t) g_t(x_t)
-    \end{align}
-    This is a change of measure from $p_{t-1}(x_1, \ldots, x_t)$ to
-    $p_t(x_1, \ldots, x_t)$. Note that $p_{t-1}(x_1, \ldots, x_t)$ only
-    involves $g_i$, and hence observations $y_i$, up to index (time) $t-1$. The
-    change of measure multiplies-in the additional factor
-    $g_t(x_t)=p(y_t|x_t)$, and thereby incorporates the observation at index (time) $t$
-    into the model.
-  
-    The stated recursion is complete by computing the normalising constant $Z_t$ for
-    $p_t(x_1, \ldots, x_t)$, which equals
-    \begin{align}
-      Z_t & = \int  p_{t-1}(x_1, \ldots, x_t) g_t(x_t) \ud x_1, \ldots \ud x_t\\
-      & = \int g_t(x_t) \left[\int p_{t-1}(x_1, \ldots, x_t) \ud x_1, \ldots \ud x_{t-1} \right] \ud x_t\\
-      & = \int g_t(x_t) p_{t-1}(x_t) \ud x_t
-    \end{align}
-    
-    This recursion, and some slight generalisations, forms the basis
-    for what is known as the ``forward recursion'' in particle
-    filtering and sequential Monte Carlo. An excellent introduction to
-    these topics is book \citep{Chopin2020}.
-  
-\end{solution}
-
-\item Use the recursion above to derive the following form of the alpha recursion: 
-  \begin{align}
-    p_{t-1}(x_{t-1}, x_t) &= p_{t-1}(x_{t-1}) p(x_t|x_{t-1}) && \text{\small (extension)} \\
-    p_{t-1}(x_t) & = \int  p_{t-1}(x_{t-1}, x_t) \ud x_{t-1} &&\text{\small (marginalisation)}\\
-    p_{t}(x_t) &= \frac{1}{Z_t} p_{t-1}(x_t) g_t(x_t)  &&\text{\small (change of measure)}\\
-    Z_t & = \int p_{t-1}(x_t) g_t(x_t) \ud x_t
-  \end{align}
-  with $p_0(x_1) = p(x_1)$.
-  
-  The term $p_{t}(x_t)$ corresponds to $\alpha(x_t)$ from the
-  alpha-recursion after normalisation. Moreover, $p_{t-1}(x_t)$ is the
-  predictive distribution for $x_t$ given observations until time
-  $t-1$. Multiplying $p_{t-1}(x_t)$ with $g_t(x_t)$ gives the new
-  $\alpha(x_t)$. The term $g_t(x_t) = p(y_t|x_t)$ is sometimes called
-  the ``correction'' term. We see here that the correction has the
-  effect of a change of measure, changing the predictive distribution
-  $p_{t-1}(x_t)$ into the filtering distribution $p_t(x_t)$.
-  
-  \begin{solution}
-  Let $t>1$. With \eqref{eq:HMM-extension}, we have
-    \begin{align}
-      p_{t-1}(x_{t-1}, x_t) & = \int p_{t-1}(x_1, \ldots, x_t) \ud x_1 \ldots \ud x_{t-2}\\
-    &=  \int p_{t-1}(x_1, \ldots, x_{t-1}) p(x_t|x_{t-1})  \ud x_1 \ldots \ud x_{t-2}\\
-      &=  p(x_t|x_{t-1})  \int p_{t-1}(x_1, \ldots, x_{t-1}) \ud x_1 \ldots \ud x_{t-2}\\
-      & =  p(x_t|x_{t-1}) p_{t-1}(x_{t-1})
-    \end{align}
-    which proves the ``extension''.
-
-    With \eqref{eq:HMM-change-of-measure}, we have
-    \begin{align}
-      p_t(x_t) & = \int  p_{t}(x_1, \ldots, x_{t}) \ud x_1, \ldots \ud x_{t-1}\\
-      &=  \frac{1}{Z_t} \int p_{t-1}(x_1, \ldots, x_t) g_t(x_t) \ud x_1, \ldots \ud x_{t-1}\\
-      & = \frac{1}{Z_t} g_t(x_t) \int p_{t-1}(x_1, \ldots, x_t)  \ud x_1, \ldots \ud x_{t-1}\\
-      & = \frac{1}{Z_t} g_t(x_t) p_{t-1}(x_t)
-    \end{align}
-    which proves the ``change of measure''. Moreover, the normalising
-    constant $Z_t$ is the same as before. Hence completing the
-    iteration until $t=n$ yields the likelihood $p(y_1, \ldots, y_n)=
-    Z_n$ as a by-product of the recursion. The initialisation of the
-    recursion with $p_0(x_1)=p(x_1)$ is also the same as above.
-      
-  \end{solution}
-  
-\end{exenumerate}
-
-
- % --------------------------------------------------------------
-
-
-\ex{Kalman filtering}
-\label{ex:kalman}
-
-We here consider filtering for hidden Markov models with Gaussian
-transition and emission distributions. For simplicity, we assume
-one-dimensional hidden variables and observables. We denote the
-probability density function of a Gaussian random variable $x$ with
-mean $\mu$ and variance $\sigma^2$ by $\Gauss(x | \mu, \sigma^2)$,
-\begin{equation}
-  \Gauss(x | \mu, \sigma^2) = \frac{1}{\sqrt{2 \pi \sigma^2}} \exp\left[ -\frac{(x-\mu)^2}{2\sigma^2} \right].
-\end{equation}
-The transition and emission distributions are assumed to be
-\begin{align}
-  p(h_s | h_{s-1}) &= \Gauss(h_s | A_s h_{s-1}, B^2_s) \label{eq:transition}\\
-  p(v_s | h_s) & = \Gauss(v_s | C_s h_s, D^2_s). \label{eq:emission}
-\end{align}
-The distribution $p(h_1)$ is assumed Gaussian with known
-parameters. The $A_s, B_s, C_s, D_s$ are also assumed known.
 
 
 \begin{exenumerate}
-
-\item Show that $h_s$ and $v_s$ as defined in the following update and
-observation equations
-\begin{align}
-  h_s & = A_s h_{s-1} + B_s \xi_s \label{eq:transition-model}\\
-  v_s & = C_s h_s  + D_s \eta_s \label{eq:emission-model}
-\end{align}
-follow the conditional distributions in \eqref{eq:transition} and
-\eqref{eq:emission}. The random variables $\xi_s$ and $\eta_s$ are
-independent from the other variables in the model and follow a
-standard normal Gaussian distribution, e.g. $\xi_s \sim \Gauss(\xi_s |
-0, 1)$.\\ Hint: For two constants $c_1$ and $c_2$, $y = c_1 + c_2 x$
-is Gaussian if $x$ is Gaussian. In other words, an affine
-transformation of a Gaussian is Gaussian.
-
-The equations mean that $h_s$ is obtained by scaling $h_{s-1}$ and by
-adding noise with variance $B_s^2$. The observed value $v_s$ is
-obtained by scaling the hidden $h_s$ and by corrupting it with
-Gaussian observation noise of variance $D_s^2$.
-
-\begin{solution}
-
-By assumption, $\xi_s$ is Gaussian. Since we condition on $h_{s-1}$,
-$A_s h_{s-1}$ in \eqref{eq:transition-model} is a constant, and since
-$B_s$ is a constant too, $h_s$ is Gaussian. 
-
-What we have to show next is that \eqref{eq:transition-model} defines
-the same conditional mean and variance as the conditional Gaussian in
-\eqref{eq:transition}: The conditional expectation of $h_s$ given
-$h_{s-1}$ is
-\begin{align}
-  \E(h_s | h_{s-1}) & = A_s h_{s-1} + \E( B_s \xi_s) &&\text{(since we condition on $h_{s-1}$)}\\
-  & = A_s h_{s-1} + B_s \E(\xi_s) && \text{(by linearity of expectation)}\\
-  & = A_s h_{s-1} && \text{(since $\xi_s$ has zero mean)}
-\end{align}
-The conditional variance of $h_s$ given $h_{s-1}$ is
-\begin{align}
-  \var(h_s | h_{s-1}) & =  \var( B_s \xi_s) &&\text{(since we condition on $h_{s-1}$)}\\
-  & = B_s^2 \var(\xi_s) && \text{(by properties of the variance)}\\
-  & = B_s^2 && \text{(since $\xi_s$ has variance one)}
-\end{align}
-We see that the conditional mean and variance of $h_s$ given $h_{s-1}$ match those in
-\eqref{eq:transition}. And since $h_s$ given $h_{s-1}$ is Gaussian as argued above,
-the result follows.
-
-Exactly the same reasoning also applies to the case of
-\eqref{eq:emission-model}. Conditional on $h_s$, $v_s$ is Gaussian
-because it is an affine transformation of a Gaussian. The conditional mean of $v_s$ given $h_s$ is:
-\begin{align}
-  \E(v_s | h_s) & = C_s h_s + \E( D_s \eta_s) &&\text{(since we condition on $h_s$)}\\
-  & = C_s h_s + D_s \E(\eta_s) && \text{(by linearity of expectation)}\\
-  & = C_s h_s && \text{(since $\eta_s$ has zero mean)}
-\end{align}
-The conditional variance of $v_s$ given $h_s$ is
-\begin{align}
-  \var(v_s | h_s) & =  \var( D_s \eta_s) &&\text{(since we condition on $h_s$)}\\
-  & = D_s^2 \var(\eta_s) && \text{(by properties of the variance)}\\
-  & = D_s^2 && \text{(since $\eta_s$ has variance one)}
-\end{align}
-Hence, conditional on $h_s$, $v_s$ is Gaussian with mean and variance as in \eqref{eq:emission}.
-
-\end{solution}
-
-  
-\item Show that
-\begin{align}
-  \int \Gauss(x | \mu, \sigma^2) \Gauss(y | Ax, B^2) \ud x & \propto \Gauss(y | A \mu, A^2 \sigma^2 + B^2) \label{eq:Gaussian-int}
-\end{align} 
-Hint: While this result can be obtained by integration, an approach that avoids this is as follows: First note that $\Gauss(x | \mu, \sigma^2) \Gauss(y | Ax, B^2)$ is proportional to the joint pdf of $x$ and $y$. We can thus consider the integral to correspond to the computation of the marginal of $y$ from the joint. Using the equivalence of Equations \eqref{eq:transition}-\eqref{eq:emission} and \eqref{eq:transition-model}-\eqref{eq:emission-model}, and the fact that the weighted sum of two Gaussian random variables is a Gaussian random variable then allows one to obtain the result.
-\begin{solution}
-We follow the procedure outlined above. The two Gaussian densities correspond to the equations
-    \begin{align}
-      x & = \mu + \sigma \xi\\
-      y &= A x + B \eta
-    \end{align}
-    where $\xi$ and $\eta$ are independent standard normal random variables. The mean of $y$ is
-    \begin{align}
-      \E(y) & = A \E(x) + B \E(\eta)\\
-      & = A \mu
-    \end{align}
-    where we have use the linearity of expectation and $\E(\eta)=0$. The variance of $y$ is
-    \begin{align}
-      \var(y) & = \var(A x) + \var (B \eta) \quad \quad \text{(since $x$ and $\eta$ are independent)}\\
-      & = A^2 \var(x) + B^2 \var(\eta) \quad \quad \text{(by properties of the variance)}\\
-      & = A^2 \sigma^2 + B^2
-    \end{align}
-    Since $y$ is the (weighted) sum of two Gaussians, it is Gaussian
-    itself, and hence its distribution is completely defined by its
-    mean and variance, so that
-    \begin{align}
-      y & \sim \Gauss(y | A \mu, A^2 \sigma^2+B^2).
-    \end{align}
-    Now, the product $\Gauss(x | \mu, \sigma^2) \Gauss(y | Ax, B^2)$ is proportional to the joint pdf of $x$ and $y$, so that the integral can be considered to correspond to the marginalisation of $x$, and hence its result is proportional to the density of $y$, which is $\Gauss(y | A \mu, A^2 \sigma^2+B^2)$.
-  \end{solution}
-  
-\item Show that
-  \begin{equation}
-    \Gauss(x | m_1, \sigma_1^2) \Gauss(x | m_2, \sigma_2^2) \propto \Gauss(x | m_3, \sigma_3^2) \label{eq:Gaussian-mult}
-  \end{equation}
-  where
-  \begin{align}
-    \sigma^2_3 & = \left( \frac{1}{\sigma_1^2} + \frac{1}{\sigma_2^2}\right)^{-1} = \frac{\sigma_1^2 \sigma_2^2}{\sigma_1^2+\sigma_2^2}\\
-    m_3 & = \sigma_3^2\left( \frac{m_1}{\sigma_1^2}+ \frac{m_2}{\sigma_2^2}\right) = m_1 + \frac{\sigma_1^2}{\sigma_1^2+\sigma_2^2}(m_2-m_1)
-  \end{align}
-  \emph{Hint: Work in the negative log domain.}
-  
-  \begin{solution}
-    We show the result using a classical technique called ``completing the square'', see e.g.\ \url{https://en.wikipedia.org/wiki/Completing_the_square}.
-
-    We work in the (negative) log-domain and use that
-    \begin{align}
-      -\log \left[\Gauss(x | m, \sigma^2)\right] & = \frac{ (x-m)^2 }{2 \sigma^2} + \text{const} \\
-      & = \frac{ x^2}{2\sigma^2} - x \frac{m}{\sigma^2} + \frac{m^2}{2\sigma^2} + \text{const} \\
-      & = \frac{ x^2}{2\sigma^2} - x \frac{m}{\sigma^2} +  \text{const} \label{eq:expansion}
-    \end{align}
-    where const indicates terms not depending on $x$. We thus obtain
-    \begin{align}
-      -\log \left[\Gauss(x | m_1, \sigma_1^2) \Gauss(x | m_2, \sigma_2^2) \right]  & = -\log \left[\Gauss(x | m_1, \sigma_1^2)\right]-\log \left[ \Gauss(x | m_2, \sigma_2^2) \right]\\
-      &= \frac{ (x-m_1)^2 }{2 \sigma_1^2} + \frac{ (x-m_2)^2 }{2 \sigma_2^2} + \text{const}\\
-      &= \frac{ x^2}{2\sigma_1^2} - x \frac{m_1}{\sigma_1^2} + \frac{ x^2}{2\sigma_2^2} - x \frac{m_2}{\sigma_2^2} + \text{const}\\
-      &= \frac{x^2}{2} \left(\frac{1}{\sigma_1^2}+\frac{1}{\sigma_2^2}\right) -x \left( \frac{m_1}{\sigma_1^2}+\frac{m_2}{\sigma_2^2}\right) + \text{const}\\
-      &=  \frac{x^2}{2 \sigma_3^2} - \frac{x}{\sigma_3^2} \sigma_3^2\left( \frac{m_1}{\sigma_1^2}+\frac{m_2}{\sigma_2^2}\right) + \text{const},
-    \end{align}
-    where
-    \begin{align}
-      \frac{1}{\sigma_3^2} &= \frac{1}{\sigma_1^2}+\frac{1}{\sigma_2^2}.
-    \end{align}
-    Comparison with \eqref{eq:expansion} shows that we can further write
-    \begin{align}
-      \frac{x^2}{2 \sigma_3^2} - \frac{x}{\sigma_3^2} \sigma_3^2\left( \frac{m_1}{\sigma_1^2}+\frac{m_2}{\sigma_2^2}\right) &=  \frac{ (x-m_3)^2 }{2 \sigma_3^2} + \text{const}
-    \end{align}
-    where
-    \begin{align}
-      m_3 & =  \sigma_3^2\left( \frac{m_1}{\sigma_1^2}+\frac{m_2}{\sigma_2^2}\right)
-    \end{align}
-    so that
-    \begin{align}
-     -\log \left[\Gauss(x | m_1, \sigma_1^2) \Gauss(x | m_2, \sigma_2^2) \right]  & = \frac{ (x-m_3)^2 }{2 \sigma_3^2} + \text{const}
-    \end{align}
-    and hence
-    \begin{align}
-     \Gauss(x | m_1, \sigma_1^2) \Gauss(x | m_2, \sigma_2^2) & \propto  \Gauss(x | m_3, \sigma_3^2).
-    \end{align}
-    Note that the identity
-    \begin{align}
-      m_3 & = \sigma_3^2\left( \frac{m_1}{\sigma_1^2}+ \frac{m_2}{\sigma_2^2}\right) = m_1 + \frac{\sigma_1^2}{\sigma_1^2+\sigma_2^2}(m_2-m_1)
-    \end{align}
-    is obtained as follows
-    \begin{align}
-      \sigma_3^2\left( \frac{m_1}{\sigma_1^2}+ \frac{m_2}{\sigma_2^2}\right) & =  \frac{\sigma_1^2 \sigma_2^2}{\sigma_1^2+\sigma_2^2}\left( \frac{m_1}{\sigma_1^2}+ \frac{m_2}{\sigma_2^2}\right)\\
-      & =  m_1 \frac{\sigma_2^2}{\sigma_1^2+\sigma_2^2}+ m_2 \frac{\sigma_1^2}{\sigma_1^2+\sigma_2^2}\\
-      & = m_1 \left(1- \frac{\sigma_1^2}{\sigma_1^2+\sigma_2^2}\right) + m_2 \frac{\sigma_1^2}{\sigma_1^2+\sigma_2^2}\\
-      & = m_1 + \frac{\sigma_1^2}{\sigma_1^2+\sigma_2^2} (m_2-m_1)
-    \end{align}
-     
-  \end{solution}
-
-
-\item We can use the ``alpha-recursion'' to recursively compute $p(h_t | v_{1:t}) \propto
-  \alpha(h_t)$ as follows.
-  \begin{align}
-    \alpha(h_1) & = p(h_1) \cdot  p(v_1 | h_1) &
-    \alpha(h_s) &=  p(v_s | h_s) \sum_{h_{s-1}} p(h_s | h_{s-1}) \alpha(h_{s-1}).
-  \end{align}
-  For continuous random variables, the sum above becomes an integral so that
-  \begin{align}
-    \alpha(h_s) &=  p(v_s | h_s) \int p(h_s | h_{s-1}) \alpha(h_{s-1}) \ud h_{s-1}.
-    \label{eq:cont-alpha}
-  \end{align}
-
-  For reference, let us denote the integral by $I(h_s)$,
-  \begin{equation}
-    I(h_s) = \int p(h_s | h_{s-1}) \alpha(h_{s-1}) \ud h_{s-1}.
-    \label{eq:I-def-kalman}
-  \end{equation}
-  Note that $I(h_s)$ is proportional to the predictive distribution $p(h_s | v_{1:s-1})$.
-  
-  For a Gaussian prior distribution for $h_1$ and Gaussian emission
-  probability $p(v_1 | h_1)$, $\alpha(h_1) = p(h_1) \cdot p(v_1 | h_1)
-  \propto p(h_1 | v_1)$ is proportional to a Gaussian. We denote its
-  mean by $\mu_1$ and its variance by $\sigma_1^2$ so that
-  \begin{equation}
-    \alpha(h_1) \propto \Gauss(h_1 | \mu_1, \sigma_1^2).
-  \end{equation}
-  Assuming $\alpha(h_{s-1}) \propto \Gauss(h_{s-1} | \mu_{s-1}, \sigma_{s-1}^2)$ (which holds for $s=2$), use Equation \eqref{eq:Gaussian-int} to show that
-  \begin{align}
-    I(h_s) & \propto \Gauss(h_s | A_s \mu_{s-1}, P_s)
-  \end{align}
-  where
-  \begin{align}
-    P_s & = A^2_s \sigma^2_{s-1} + B_s^2.
-  \end{align}
-  
-  \begin{solution}
-    We can set $\alpha(h_{s-1}) \propto \Gauss(h_{s-1} | \mu_{s-1}, \sigma_{s-1}^2)$. Since $p(h_s | h_{s-1})$ is Gaussian, see Equation \eqref{eq:transition},  Equation \eqref{eq:I-def-kalman} becomes
-    \begin{align}
-      I(h_s) &\propto \int  \Gauss(h_s | A_s h_{s-1}, B^2_s)  \Gauss(h_{s-1} | \mu_{s-1}, \sigma_{s-1}^2) \ud h_{s-1}.
-    \end{align}
-    Equation \eqref{eq:Gaussian-int} with $x \equiv h_{s-1}$ and $y \equiv h_s$ yields the desired result,
-    \begin{align}
-      I(h_s) &\propto  \Gauss(h_s | A_s \mu_{s-1}, A_s^2 \sigma_{s-1}^2+B_s^2).
-      \label{eq:prediction-Gaussian}
-    \end{align}
-    We can understand the equation as follows: To compute the
-    predictive mean of $h_s $ given $v_{1:s-1}$, we forward propagate
-    the mean of $h_{s-1} | v_{1:s-1}$ using the update equation
-    \eqref{eq:transition-model}. This gives the mean term $A_s
-    \mu_{s-1}$. Since $h_{s-1} | v_{1:s-1}$ has variance
-    $\sigma_{s-1}^2$, the variance of $h_s | v_{1:s-1}$ is given by
-    $A_s^2 \sigma_{s-1}^2$ plus an additional term, $B_s^2$, due to
-    the noise in the forward propagation. This gives the variance term
-    $A_s^2 \sigma_{s-1}^2+B_s^2$.
     
-  \end{solution}
-
-  \item Use Equation \eqref{eq:Gaussian-mult} to show that
-  \begin{align}
-    \alpha(h_s) & \propto \Gauss\left(h_s | \mu_s , \sigma_s^2\right)
-  \end{align}
-  where
-  \begin{align}
-    \mu_s & =  A_s \mu_{s-1} + \frac{P_sC_s}{C_s^2 P_s+ D_s^2}\left(v_s - C_s A_s \mu_{s-1}\right)\\
-     \sigma^2_s & =  \frac{P_s D_s^2}{P_s C_s^2+ D_s^2}
-  \end{align}
-
-  \begin{solution}
-    Having computed $I(h_s)$, the final step in the alpha-recursion is
-    \begin{align}
-      \alpha(h_s) & = p(v_s | h_s) I(h_s)
-    \end{align}
-    With Equation \eqref{eq:emission} we obtain
-    \begin{align}
-      \alpha(h_s) & \propto \Gauss(v_s | C_s h_s, D^2_s)  \Gauss(h_s | A_s \mu_{s-1}, P_s).
-    \end{align}
-    We further note that
-    \begin{align}
-      \Gauss(v_s | C_s h_s, D_s^2) \propto \Gauss \left(h_s | C_s^{-1}
-      v_s, \frac{D_s^2}{C_s^2}\right)
-    \end{align}
-    so that we can apply Equation \eqref{eq:Gaussian-mult} (with $m_1=A \mu_{s-1}$, $\sigma_1^2 = P_s$)
-    \begin{align}
-      \alpha(h_s) & \propto  \Gauss\left(h_s | C_s^{-1} v_s, \frac{D_s^2}{C_s^2}\right) \Gauss(h_s | A_s \mu_{s-1}, P_s)\\
-      & \propto \Gauss\left(h_s, \mu_s, \sigma_s^2\right)
-    \end{align}
-    with
-    \begin{align}
-      \mu_s & =  A_s \mu_{s-1} + \frac{P_s}{P_s+ \frac{D_s^2}{C_s^2}}\left(C_s^{-1} v_s - A_s \mu_{s-1}\right)\\
-            & =  A_s \mu_{s-1} + \frac{P_sC_s^2}{C_s^2 P_s+ D_s^2}\left(C_s^{-1}v_s - A_s \mu_{s-1}\right)\\
-      & =  A_s \mu_{s-1} + \frac{P_sC_s}{C_s^2 P_s+ D_s^2}\left(v_s - C_s A_s \mu_{s-1}\right)\\
-      \sigma^2_s & = \frac{P_s \frac{D_s^2}{C_s^2}}{P_s+ \frac{D_s^2}{C_s^2}}\\
-      & =  \frac{P_s D_s^2}{P_s C_s^2+ D_s^2}\\
-    \end{align}
-  \end{solution}
-  
-  \item Show that $\alpha(h_s)$ can be re-written as
-     \begin{align}
-    \alpha(h_s) & \propto \Gauss\left(h_s | \mu_s , \sigma_s^2\right)
-     \end{align}
-     where
-     \begin{align}
-       \mu_s & = A_s \mu_{s-1} + K_s \left(v_s - C_s A_s \mu_{s-1}\right) \label{eq:mu-def}\\
-       \sigma_s^2 & = (1-K_sC_s)P_s\\
-       K_s & = \frac{P_s C_s}{C_s^2 P_s + D_s^2}
-     \end{align}
-     These are the Kalman filter equations and $K_s$ is called the Kalman filter gain.
-
-     \begin{solution}
-       We start from
-       \begin{align}
-         \mu_s & = A_s \mu_{s-1} + \frac{P_sC_s}{C_s^2 P_s+ D_s^2}\left(v_s - C_s A_s \mu_{s-1}\right),
-       \end{align}
-       and see that
-       \begin{equation}
-         \frac{P_sC_s}{C_s^2 P_s+ D_s^2} = K_s
-       \end{equation}
-       so that
-       \begin{align}
-         \mu_s & = A_s \mu_{s-1} + K_s \left(v_s - C_s A_s \mu_{s-1}\right).
-       \end{align}
-       For the variance $\sigma_s^2$, we have
-       \begin{align}
-         \sigma^2_s  & =  \frac{P_s D_s^2}{P_s C_s^2+ D_s^2}\\
-         & =\frac{D_s^2}{P_s C_s^2+ D_s^2}  P_s \\
-         & = \left(1- \frac{P_sC_s^2}{P_s C_s^2+ D_s^2}\right) P_s\\
-         & = (1- K_s C_s) P_s,
-       \end{align}
-       which is the desired result.
-
-       The filtering result generalises to vector valued latents and
-       visibles where the transition and emission distributions in
-       \eqref{eq:transition} and \eqref{eq:emission} become
-       \begin{align}
-         p(\h_s | \h_{s-1}) & = \Gauss(\h_s | \A \h_{s-1}, \Sigmab^h),\\
-         p(\v_s | \h_s) & = \Gauss( \v_s | \C_s \h_s, \Sigmab^v),
-       \end{align}
-       where $\Gauss()$ denotes multivariate Gaussian pdfs, e.g.\
-       \begin{align}
-         \Gauss(\v_s | \C_s \h_s, \Sigmab^v) &= \frac{1}{|\det( 2\pi \Sigmab^v)|^{1/2}}\exp\left( -\frac{1}{2} (\v_s-\C_s \h_s)^\top (\Sigmab^v)^{-1}(\v_s-\C_s \h_s)\right).
-       \end{align}
-       We then have
-       \begin{align}
-         p(\h_t | \v_{1:t}) & = \Gauss( \h_t | \mub_t, \Sigmab_t)
-       \end{align}
-       where the posterior mean and variance are recursively computed as
-       \begin{align}
-         \mub_s & = \A_s \mub_{s-1} + \K_s ( \v_s-\C_s \A_s \mub_{s-1} )\\
-         \Sigmab_s & = (\I - \K_s \C_s) \PP_s\\
-         \PP_s & = \A_s \Sigmab_{s-1} \A_s^\top + \Sigmab^h\\
-         \K_s & = \PP_s \C_s^\top \left( \C_s \PP_s \C_s^\top + \Sigmab^v \right)^{-1}
-       \end{align}
-       and initialised with $\mub_1$ and $\Sigmab_1$ equal to the mean
-       and variance of $p(\h_1 | \v_1)$. The matrix $\K_s$ is then
-       called the Kalman gain matrix.
-
-       The Kalman filter is widely applicable, see
-       e.g.\ \url{https://en.wikipedia.org/wiki/Kalman_filter}, and
-       has played a role in historic events such as the moon
-       landing, see e.g.\ \citep{Grewal2010}.
-
-       An example of the application of the Kalman filter to tracking is shown in Figure \ref{fig:Kalman-tracking}.
-     \begin{figure}[h]
-       \centering
-       \includegraphics[width=0.5 \textwidth]{Figure13-22}
-       \caption{ \label{fig:Kalman-tracking} Kalman filtering for tracking of a moving object. The blue points indicate the true positions of the object in a two-dimensional space at successive time steps, the green points denote noisy measurements of the positions, and the red crosses indicate the means of the inferred posterior distributions of the positions obtained by running the Kalman filtering equations. The covariances of the inferred positions are indicated by the red ellipses, which correspond to contours having one standard deviation. \citep[Figure 13.22]{Bishop2006}}
-     \end{figure}
-     
-      
-     \end{solution}
-     
-   \item Explain Equation \eqref{eq:mu-def} in non-technical terms. What happens if the variance $D_s^2$ of the observation noise goes to zero?
-     
-     \begin{solution}
-       We have already seen that $A_s \mu_{s-1}$ is the predictive
-       mean of $h_s$ given $v_{1:s-1}$. The term $C_s A_s \mu_{s-1}$
-       is thus the predictive mean of $v_s$ given the observations so
-       far, $v_{1:s-1}$. The difference $v_s - C_s A_s \mu_{s-1}$ is
-       thus the prediction error of the observable. Since $\alpha(h_s)$ is
-       proportional to $p(h_s | v_{1:s})$ and $\mu_s$ its mean, we
-       thus see that the posterior mean of $h_s | v_{1:s}$ equals the
-       posterior mean of $h_s | v_{1:s-1}$, $A_s \mu_{s-1}$, updated
-       by the prediction error of the observable weighted by the
-       Kalman gain.
-
-       For $D_s^2 \to 0$, $K_s \to C_s^{-1}$ and
+    \item Mostre que
+    \begin{equation}
+        p(x_1, \ldots, x_n, y_1, \ldots, y_t) =  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^t p(y_i|x_i)
+    \end{equation}
+    para $t=0, \ldots, n$. Consideramos o caso $t=0$ como correspondendo a $p(x_1, \ldots, x_n)$,
+    \begin{equation}
+        p(x_1, \ldots, x_n) =  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}).
+    \end{equation}
+    
+    \begin{solution}
+        O resultado segue integrando/somando $y_{t+1} \ldots n$.
         \begin{align}
-          \mu_s & = A_s \mu_{s-1} + K_s \left(v_s - C_s A_s \mu_{s-1}\right) \\
-          & = A_s \mu_{s-1} + C_s^{-1} \left(v_s - C_s A_s \mu_{s-1}\right) \\
-          & = A_s \mu_{s-1} + C_s^{-1} v_s - A_s \mu_{s-1}\\
-          & =  C_s^{-1} v_s,
+            p(x_1, \ldots, x_n, y_1, \ldots, y_t) & = \int p(x_1, \ldots, x_n, y_1, \ldots, y_n) \ud y_{t+1} \ldots \ud y_n \\
+            & = \int  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^n p(y_i|x_i)\ud y_{t+1} \ldots \ud y_n \\
+            & =  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^t p(y_i|x_i) \int  \prod_{i=t+1}^n p(y_i|x_i)\ud y_{t+1} \ldots \ud y_n \\
+            &=  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^t p(y_i|x_i)   \prod_{i=t+1}^n \underbrace{\int p(y_i|x_i)\ud y_{i}}_{=1} \\
+            & =  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^t p(y_i|x_i)
         \end{align}
-        so that the posterior mean of $p(h_s | v_{1:s})$ is obtained
-        by inverting the observation equation. Moreover, the variance
-        $\sigma_s^2$ of $h_s | v_{1:s}$ goes to zero so that the value
-        of $h_s$ is known precisely and equals $C_s^{-1} v_s$.
-       
-     \end{solution}
+        O resultado para $p(x_1, \ldots, x_n)$ \'e obtido quando integramos todas as
+        vari\'aveis $y$.
+    \end{solution}
+    
+    \item Mostre que $p(x_1, \ldots, x_n | y_1, \ldots, y_t)$, $t=0,
+    \ldots, n$, se fatoriza como
+    \begin{equation}
+        p(x_1, \ldots, x_n | y_1, \ldots, y_t) \propto  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^t g_i(x_i)
+        \label{eq:HMM-conditional-factorisation-alt}
+    \end{equation}
+    onde $g_i(x_i) = p(y_i|x_i)$ para um valor fixo de $y_i$, e que sua constante de normaliza\'c\~ao $Z_t$ \'e igual \`a verossimilhan\'ca $p(y_1, \ldots, y_t)$.
+    
+    \begin{solution}
+        O resultado segue da defini\'c\~ao b\'asica da condicional:
+        \begin{align}
+            p(x_1, \ldots, x_n | y_1, \ldots, y_t) & = \frac{p(x_1, \ldots, x_n, y_1, \ldots, y_t)}{p(y_1, \ldots, y_t)}
+        \end{align}
+        juntamente com a express\~ao para $p(x_1, \ldots, x_n, y_1, \ldots, y_t)$ quando os $y_i$ s\~ao mantidos fixos.
+    \end{solution}
+    
+    \item Denomine $ p(x_1, \ldots, x_n|y_1, \ldots, y_t)$ por $p_t(x_1,
+    \ldots, x_n)$. O \'indice $t \le n$ indica o tempo da
+    \'ultima vari\'avel $y$ em que estamos condicionando. Mostre a seguinte
+    recurs\~ao para $1 \le t \le n$:
+    \begin{align}
+        p_{t-1}(x_1, \ldots, x_t) &=
+        \begin{cases}
+            p(x_1) & \text{se } t=1\\
+            p_{t-1}(x_1, \ldots, x_{t-1}) p(x_t|x_{t-1}) & \text{caso contr\'ario}
+            \label{eq:HMM-extension-alt}
+        \end{cases} && \text{\small (extens\~ao)}\\
+        p_{t}(x_1, \ldots, x_{t}) &= \frac{1}{Z_t} p_{t-1}(x_1, \ldots, x_t) g_t(x_t) \label{eq:HMM-change-of-measure-alt} && \text{\small (mudan\'ca de medida)}\\
+        Z_t & = \int p_{t-1}(x_t) g_t(x_t) \ud x_t 
+    \end{align}
+    Ao iterar de $t=1$ at\'e $t=n$, podemos assim computar recursivamente
+    $p(x_1, \ldots, x_n|y_1, \ldots, y_n)$, incluindo sua constante de
+    normaliza\'c\~ao $Z_n$, que \'e igual \`a verossimilhan\'ca $ Z_n = p(y_1, \ldots, y_n)$. 
+    
+    \begin{solution}
+        Come\'camos com \eqref{eq:HMM-conditional-factorisation-alt} que mostra
+        que, por defini\'c\~ao de $p_t(x_1, \ldots, x_n)$, temos:
+        \begin{align}
+            p_t(x_1, \ldots, x_n) & = p(x_1, \ldots, x_n | y_1, \ldots, y_t)\\
+            &\propto p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^t g_i(x_i)
+            \label{eq:HMM-conditional-factorisation-2-alt} 
+        \end{align}
+        Para $t=1$, temos:
+        \begin{equation}
+            p_1(x_1, \ldots, x_n) \propto  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) g_1(x_1)
+        \end{equation}
+        Integrar em rela\'c\~ao a $x_2, \ldots, x_n$ resulta em:
+        \begin{align}
+            p_1(x_1) & = \int p_1(x_1, \ldots, x_n) \ud x_2 \ldots \ud x_n\\
+            &\propto \int  p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) g_1(x_1)\ud x_2 \ldots \ud x_n\\
+            &\propto p(x_1) g_1(x_1) \int  \prod_{i=2}^n p(x_i|x_{i-1})\ud x_2 \ldots \ud x_n\\
+            &\propto p(x_1) g_1(x_1) \underbrace{\prod_{i=2}^n \int p(x_i|x_{i-1})\ud x_i}_{=1}\\
+            &\propto p(x_1) g_1(x_1)
+        \end{align}
+        
+        A constante de normaliza\'c\~ao \'e:
+        \begin{align}
+            Z_1 & = \int  p(x_1) g_1(x_1) \ud x_1
+        \end{align}
+        Isso estabelece o resultado para $t=1$.
+        
+        De \eqref{eq:HMM-conditional-factorisation-alt}, temos ainda:
+        \begin{align}
+            p_{t-1}(x_1, \ldots, x_n) & = p(x_1, \ldots, x_n | y_1, \ldots, y_{t-1})\\
+            &\propto p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^{t-1} g_i(x_i)
+        \end{align}
+        Integrar em rela\'c\~ao a $x_{t+1}, \ldots, x_n$, portanto, fornece:
+        \begin{align}
+            p_{t-1}(x_1, \ldots, x_t) & = \int p_{t-1}(x_1, \ldots, x_n) \ud x_{t+1} \ldots \ud x_n\\
+            &\propto \int p(x_1) \prod_{i=2}^n p(x_i|x_{i-1}) \prod_{i=1}^{t-1} g_i(x_i)\ud x_{t+1} \ldots \ud x_n\\
+            & \propto  p(x_1) \prod_{i=2}^t p(x_i|x_{i-1}) \prod_{i=1}^{t-1} g_i(x_i) \int \prod_{i=t+1}^n p(x_i|x_{i-1}) \ud x_{t+1} \ldots \ud x_n\\
+            & \propto  p(x_1) \prod_{i=2}^t p(x_i|x_{i-1}) \prod_{i=1}^{t-1} g_i(x_i) \prod_{i=t+1}^n \int p(x_i|x_{i-1}) \ud x_i\\
+            & \propto  p(x_1) \prod_{i=2}^t p(x_i|x_{i-1}) \prod_{i=1}^{t-1} g_i(x_i)
+        \end{align}
+        Notando que o produto sobre os $g_i$ n\~ao envolve $x_t$ e
+        que $p(x_t | x_{t-1})$ \'e uma fdp, temos al\'em disso:
+        \begin{align}
+            p_{t-1}(x_1, \ldots, x_{t-1}) &=\int  p_{t-1}(x_1, \ldots, x_t) \ud x_t\\
+            &  \propto p(x_1) \prod_{i=2}^{t-1} p(x_i|x_{i-1}) \prod_{i=1}^{t-1} g_i(x_i)
+        \end{align}
+        Logo:
+        \begin{equation}
+            p_{t-1}(x_1, \ldots, x_t) =  p_{t-1}(x_1, \ldots, x_{t-1}) p(x_t|x_{t-1})
+        \end{equation}
+        Note que podemos usar o sinal de igual pois $p(x_t|x_{t-1})$ \'e uma
+        fdp e, portanto, integra um. Isso \'e s\^o vezes chamado de
+        ``extens\~ao'', pois as entradas para $p_{t-1}$ s\~ao estendidas de
+        $(x_1, \ldots, x_{t-1})$ para $x_1, \ldots, x_t$.
+        
+        De \eqref{eq:HMM-conditional-factorisation-2-alt}, temos ainda:
+        \begin{align}
+            p_t(x_1, \ldots, x_n) & \propto  p_{t-1}(x_1, \ldots, x_n) g_t(x_t)
+        \end{align}
+        Integrar em rela\'c\~ao a $x_{t+1}, \ldots, x_n$ fornece, ent\~ao:
+        \begin{align}
+            p_t(x_1, \ldots, x_t) & \propto  p_{t-1}(x_1, \ldots, x_t) g_t(x_t)
+        \end{align}
+        Esta \'e uma mudan\'ca de medida de $p_{t-1}(x_1, \ldots, x_t)$ para
+        $p_t(x_1, \ldots, x_t)$. Note que $p_{t-1}(x_1, \ldots, x_t)$ envolve
+        $g_i$, e portanto observa\'c\~oes $y_i$, apenas at\'e o tempo $t-1$. A
+        mudan\'ca de medida multiplica o fator adicional
+        $g_t(x_t)=p(y_t|x_t)$ e, assim, incorpora a observa\'c\~ao no tempo $t$
+        ao modelo.
+        
+        A recurs\~ao declarada completa-se computando a constante de normaliza\'c\~ao $Z_t$ para
+        $p_t(x_1, \ldots, x_t)$, que \'e igual a:
+        \begin{align}
+            Z_t & = \int  p_{t-1}(x_1, \ldots, x_t) g_t(x_t) \ud x_1, \ldots \ud x_t\\
+            & = \int g_t(x_t) \left[\int p_{t-1}(x_1, \ldots, x_t) \ud x_1, \ldots \ud x_{t-1} \right] \ud x_t\\
+            & = \int g_t(x_t) p_{t-1}(x_t) \ud x_t
+        \end{align}
+        
+        Esta recurs\~ao, e algumas generaliza\'c\~oes leves, formam a base
+        para o que \'e conhecido como a ``recurs\~ao forward'' em filtragem
+        de part\'iculas e Monte Carlo sequencial. Uma excelente introdu\'c\~ao a
+        esses t\'opicos \'e o livro \citep{Chopin2020}.
+        
+    \end{solution}
+    
+    \item Use a recurs\~ao acima para derivar a seguinte forma da recurs\~ao alfa: 
+    \begin{align}
+        p_{t-1}(x_{t-1}, x_t) &= p_{t-1}(x_{t-1}) p(x_t|x_{t-1}) && \text{\small (extens\~ao)} \\
+        p_{t-1}(x_t) & = \int  p_{t-1}(x_{t-1}, x_t) \ud x_{t-1} &&\text{\small (marginaliza\'c\~ao)}\\
+        p_{t}(x_t) &= \frac{1}{Z_t} p_{t-1}(x_t) g_t(x_t)  &&\text{\small (mudan\'ca de medida)}\\
+        Z_t & = \int p_{t-1}(x_t) g_t(x_t) \ud x_t
+    \end{align}
+    com $p_0(x_1) = p(x_1)$.
+    
+    O termo $p_{t}(x_t)$ corresponde a $\alpha(x_t)$ da
+    recurs\~ao alfa ap\'os a normaliza\'c\~ao. Al\'em disso, $p_{t-1}(x_t)$ \'e a
+    distribui\'c\~ao preditiva para $x_t$ dadas as observa\'c\~oes at\'e o tempo
+    $t-1$. Multiplicar $p_{t-1}(x_t)$ por $g_t(x_t)$ resulta no novo
+    $\alpha(x_t)$. O termo $g_t(x_t) = p(y_t|x_t)$ \'e s\^o vezes chamado
+    de termo de ``corre\'c\~ao''. Vemos aqui que a corre\'c\~ao tem o
+    efeito de uma mudan\'ca de medida, transformando a distribui\'c\~ao preditiva
+    $p_{t-1}(x_t)$ na distribui\'c\~ao de filtragem $p_t(x_t)$.
+    
+    \begin{solution}
+        Seja $t>1$. Com \eqref{eq:HMM-extension-alt}, temos:
+        \begin{align}
+            p_{t-1}(x_{t-1}, x_t) & = \int p_{t-1}(x_1, \ldots, x_t) \ud x_1 \ldots \ud x_{t-2}\\
+            &=  \int p_{t-1}(x_1, \ldots, x_{t-1}) p(x_t|x_{t-1})  \ud x_1 \ldots \ud x_{t-2}\\
+            &=  p(x_t|x_{t-1})  \int p_{t-1}(x_1, \ldots, x_{t-1}) \ud x_1 \ldots \ud x_{t-2}\\
+            & =  p(x_t|x_{t-1}) p_{t-1}(x_{t-1})
+        \end{align}
+        o que prova a ``extens\~ao''.
+        
+        Com \eqref{eq:HMM-change-of-measure-alt}, temos:
+        \begin{align}
+            p_t(x_t) & = \int  p_{t}(x_1, \ldots, x_{t}) \ud x_1, \ldots \ud x_{t-1}\\
+            &=  \frac{1}{Z_t} \int p_{t-1}(x_1, \ldots, x_t) g_t(x_t) \ud x_1, \ldots \ud x_{t-1}\\
+            & = \frac{1}{Z_t} g_t(x_t) \int p_{t-1}(x_1, \ldots, x_t)  \ud x_1, \ldots \ud x_{t-1}\\
+            & = \frac{1}{Z_t} g_t(x_t) p_{t-1}(x_t)
+        \end{align}
+        o que prova a ``mudan\'ca de medida''. Al\'em disso, a constante de
+        normaliza\'c\~ao $Z_t$ \'e a mesma de antes. Assim, completar a
+        itera\'c\~ao at\'e $t=n$ produz a verossimilhan\'ca $p(y_1, \ldots, y_n) =
+        Z_n$ como um subproduto da recurs\~ao. A inicializa\'c\~ao da
+        recurs\~ao com $p_0(x_1)=p(x_1)$ tamb\'em \'e a mesma de cima.
+        
+    \end{solution}
+    
 \end{exenumerate}
 
+
+% --------------------------------------------------------------
+
+
+\ex{Filtragem de Kalman}
+\label{ex:kalman-alt}
+
+Consideramos aqui a filtragem para modelos ocultos de Markov com distribui\'c\~oes
+de transi\'c\~ao e emiss\~ao Gaussianas. Por simplicidade, assumimos
+vari\'aveis ocultas e observ\'aveis unidimensionais. Denotamos a
+fun\'c\~ao de densidade de probabilidade de uma vari\'avel aleat\'oria Gaussiana $x$ com
+m\'edia $\mu$ e vari\^ancia $\sigma^2$ por $\Gauss(x | \mu, \sigma^2)$:
+\begin{equation}
+    \Gauss(x | \mu, \sigma^2) = \frac{1}{\sqrt{2 \pi \sigma^2}} \exp\left[ -\frac{(x-\mu)^2}{2\sigma^2} \right].
+\end{equation}
+As distribui\'c\~oes de transi\'c\~ao e emiss\~ao s\~ao assumidas como:
+\begin{align}
+    p(h_s | h_{s-1}) &= \Gauss(h_s | A_s h_{s-1}, B^2_s) \label{eq:transition-alt}\\
+    p(v_s | h_s) & = \Gauss(v_s | C_s h_s, D^2_s). \label{eq:emission-alt}
+\end{align}
+A distribui\'c\~ao $p(h_1)$ \'e assumida Gaussiana com par\^ametros conhecidos.
+$A_s, B_s, C_s, D_s$ tamb\'em s\~ao assumidos conhecidos.
+
+
+\begin{exenumerate}
+    
+    \item Mostre que $h_s$ e $v_s$, conforme definidos nas seguintes equa\'c\~oes de atualiza\'c\~ao
+    e observa\'c\~ao
+    \begin{align}
+        h_s & = A_s h_{s-1} + B_s \xi_s \label{eq:transition-model-alt}\\
+        v_s & = C_s h_s  + D_s \eta_s \label{eq:emission-model-alt}
+    \end{align}
+    seguem as distribui\'c\~oes condicionais em \eqref{eq:transition-alt} e
+    \eqref{eq:emission-alt}. As vari\'aveis aleat\'orias $\xi_s$ e $\eta_s$ s\~ao
+    independentes das outras vari\'aveis no modelo e seguem uma
+    distribui\'c\~ao Gaussiana normal padr\~ao, e.g. $\xi_s \sim \Gauss(\xi_s |
+    0, 1)$.\\ Dica: Para duas constantes $c_1$ e $c_2$, $y = c_1 + c_2 x$
+    \'e Gaussiana se $x$ for Gaussiana. Em outras palavras, uma
+    transforma\'c\~ao afim de uma Gaussiana \'e Gaussiana.
+    
+    As equa\'c\~oes significam que $h_s$ \'e obtido escalando $h_{s-1}$ e
+    adicionando ru\'ido com vari\^ancia $B_s^2$. O valor observado $v_s$ \'e
+    obtido escalando a oculta $h_s$ e corrompendo-a com
+    ru\'ido de observa\'c\~ao Gaussiano de vari\^ancia $D_s^2$.
+    
+    \begin{solution}
+        
+        Por hip\'otese, $\xi_s$ \'e Gaussiana. Como condicionamos em $h_{s-1}$,
+        $A_s h_{s-1}$ em \eqref{eq:transition-model-alt} \'e uma constante, e como
+        $B_s$ tamb\'em \'e uma constante, $h_s$ \'e Gaussiana. 
+        
+        O que temos que mostrar em seguida \'e que \eqref{eq:transition-model-alt} define
+        a mesma m\'edia e vari\^ancia condicionais que a Gaussiana condicional em
+        \eqref{eq:transition-alt}: A esperan\'ca condicional de $h_s$ dado
+        $h_{s-1}$ \'e:
+        \begin{align}
+            \E(h_s | h_{s-1}) & = A_s h_{s-1} + \E( B_s \xi_s) &&\text{(pois condicionamos em $h_{s-1}$)}\\
+            & = A_s h_{s-1} + B_s \E(\xi_s) && \text{(por linearidade da esperan\'ca)}\\
+            & = A_s h_{s-1} && \text{(pois $\xi_s$ tem m\'edia zero)}
+        \end{align}
+        A vari\^ancia condicional de $h_s$ dado $h_{s-1}$ \'e:
+        \begin{align}
+            \var(h_s | h_{s-1}) & =  \var( B_s \xi_s) &&\text{(pois condicionamos em $h_{s-1}$)}\\
+            & = B_s^2 \var(\xi_s) && \text{(por propriedades da vari\^ancia)}\\
+            & = B_s^2 && \text{(pois $\xi_s$ tem vari\^ancia um)}
+        \end{align}
+        Vemos que a m\'edia e a vari\^ancia condicionais de $h_s$ dado $h_{s-1}$ coincidem com aquelas em
+        \eqref{eq:transition-alt}. E como $h_s$ dado $h_{s-1}$ \'e Gaussiana conforme argumentado acima,
+        o resultado segue.
+        
+        Exatamente o mesmo racioc\'inio tamb\'em se aplica ao caso de
+        \eqref{eq:emission-model-alt}. Condicional a $h_s$, $v_s$ \'e Gaussiana
+        porque \'e uma transforma\'c\~ao afim de uma Gaussiana. A m\'edia condicional de $v_s$ dado $h_s$ \'e:
+        \begin{align}
+            \E(v_s | h_s) & = C_s h_s + \E( D_s \eta_s) &&\text{(pois condicionamos em $h_s$)}\\
+            & = C_s h_s + D_s \E(\eta_s) && \text{(por linearidade da esperan\'ca)}\\
+            & = C_s h_s && \text{(pois $\eta_s$ tem m\'edia zero)}
+        \end{align}
+        A vari\^ancia condicional de $v_s$ dado $h_s$ \'e:
+        \begin{align}
+            \var(v_s | h_s) & =  \var( D_s \eta_s) &&\text{(pois condicionamos em $h_s$)}\\
+            & = D_s^2 \var(\eta_s) && \text{(por propriedades da vari\^ancia)}\\
+            & = D_s^2 && \text{(pois $\eta_s$ tem vari\^ancia um)}
+        \end{align}
+        Portanto, condicional a $h_s$, $v_s$ \'e Gaussiana com m\'edia e vari\^ancia como em \eqref{eq:emission-alt}.
+        
+    \end{solution}
+    
+    
+    \item Mostre que
+    \begin{align}
+        \int \Gauss(x | \mu, \sigma^2) \Gauss(y | Ax, B^2) \ud x & \propto \Gauss(y | A \mu, A^2 \sigma^2 + B^2) \label{eq:Gaussian-int-alt}
+    \end{align} 
+    Dica: Embora este resultado possa ser obtido por integra\'c\~ao, uma abordagem que evita isso \'e a seguinte: Primeiro note que $\Gauss(x | \mu, \sigma^2) \Gauss(y | Ax, B^2)$ \'e proporcional \`a fdp conjunta de $x$ e $y$. Podemos assim considerar que a integral corresponde ao c\'alculo da marginal de $y$ a partir da conjunta. Usar a equival\^encia das Equa\'c\~oes \eqref{eq:transition-alt}-\eqref{eq:emission-alt} e \eqref{eq:transition-model-alt}-\eqref{eq:emission-model-alt}, e o fato de que a soma ponderada de duas vari\'aveis aleat\'orias Gaussianas \'e uma vari\'avel aleat\'oria Gaussiana, permite ent\~ao obter o resultado.
+    \begin{solution}
+        Seguimos o procedimento descrito acima. As duas densidades Gaussianas correspondem \`as equa\'c\~oes:
+        \begin{align}
+            x & = \mu + \sigma \xi\\
+            y &= A x + B \eta
+        \end{align}
+        onde $\xi$ e $\eta$ s\~ao vari\'aveis aleat\'orias normais padr\~ao independentes. A m\'edia de $y$ \'e:
+        \begin{align}
+            \E(y) & = A \E(x) + B \E(\eta)\\
+            & = A \mu
+        \end{align}
+        onde usamos a linearidade da esperan\'ca e $\E(\eta)=0$. A vari\^ancia de $y$ \'e:
+        \begin{align}
+            \var(y) & = \var(A x) + \var (B \eta) \quad \quad \text{(j\'a que $x$ e $\eta$ s\~ao independentes)}\\
+            & = A^2 \var(x) + B^2 \var(\eta) \quad \quad \text{(por propriedades da vari\^ancia)}\\
+            & = A^2 \sigma^2 + B^2
+        \end{align}
+        Como $y$ \'e a soma (ponderada) de duas Gaussianas, ela pr\'opria \'e Gaussiana
+        e, portanto, sua distribui\'c\~ao \'e completamente definida por sua
+        m\'edia e vari\^ancia, de modo que:
+        \begin{align}
+            y & \sim \Gauss(y | A \mu, A^2 \sigma^2+B^2).
+        \end{align}
+        Agora, o produto $\Gauss(x | \mu, \sigma^2) \Gauss(y | Ax, B^2)$ \'e proporcional \`a fdp conjunta de $x$ e $y$, de modo que a integral pode ser considerada como correspondendo \`a marginaliza\'c\~ao de $x$, e portanto seu resultado \'e proporcional \`a densidade de $y$, que \'e $\Gauss(y | A \mu, A^2 \sigma^2+B^2)$.
+    \end{solution}
+    
+    \item Mostre que
+    \begin{equation}
+        \Gauss(x | m_1, \sigma_1^2) \Gauss(x | m_2, \sigma_2^2) \propto \Gauss(x | m_3, \sigma_3^2) \label{eq:Gaussian-mult-alt}
+    \end{equation}
+    onde
+    \begin{align}
+        \sigma^2_3 & = \left( \frac{1}{\sigma_1^2} + \frac{1}{\sigma_2^2}\right)^{-1} = \frac{\sigma_1^2 \sigma_2^2}{\sigma_1^2+\sigma_2^2}\\
+        m_3 & = \sigma_3^2\left( \frac{m_1}{\sigma_1^2}+ \frac{m_2}{\sigma_2^2}\right) = m_1 + \frac{\sigma_1^2}{\sigma_1^2+\sigma_2^2}(m_2-m_1)
+    \end{align}
+    \emph{Dica: Trabalhe no dom\'inio do logaritmo negativo.}
+    
+    \begin{solution}
+        Mostramos o resultado usando uma t\'ecnica cl\'assica chamada ``completar o quadrado'', veja e.g.\ \url{https://en.wikipedia.org/wiki/Completing_the_square}.
+        
+        Trabalhamos no dom\'inio do logaritmo (negativo) e usamos que:
+        \begin{align}
+            -\log \left[\Gauss(x | m, \sigma^2)\right] & = \frac{ (x-m)^2 }{2 \sigma^2} + \text{const} \\
+            & = \frac{ x^2}{2\sigma^2} - x \frac{m}{\sigma^2} + \frac{m^2}{2\sigma^2} + \text{const} \\
+            & = \frac{ x^2}{2\sigma^2} - x \frac{m}{\sigma^2} +  \text{const} \label{eq:expansion-alt}
+        \end{align}
+        onde const indica termos que n\~ao dependem de $x$. Obtemos assim:
+        \begin{align}
+            -\log \left[\Gauss(x | m_1, \sigma_1^2) \Gauss(x | m_2, \sigma_2^2) \right]  & = -\log \left[\Gauss(x | m_1, \sigma_1^2)\right]-\log \left[ \Gauss(x | m_2, \sigma_2^2) \right]\\
+            &= \frac{ (x-m_1)^2 }{2 \sigma_1^2} + \frac{ (x-m_2)^2 }{2 \sigma_2^2} + \text{const}\\
+            &= \frac{ x^2}{2\sigma_1^2} - x \frac{m_1}{\sigma_1^2} + \frac{ x^2}{2\sigma_2^2} - x \frac{m_2}{\sigma_2^2} + \text{const}\\
+            &= \frac{x^2}{2} \left(\frac{1}{\sigma_1^2}+\frac{1}{\sigma_2^2}\right) -x \left( \frac{m_1}{\sigma_1^2}+\frac{m_2}{\sigma_2^2}\right) + \text{const}\\
+            &=  \frac{x^2}{2 \sigma_3^2} - \frac{x}{\sigma_3^2} \sigma_3^2\left( \frac{m_1}{\sigma_1^2}+\frac{m_2}{\sigma_2^2}\right) + \text{const},
+        \end{align}
+        onde:
+        \begin{align}
+            \frac{1}{\sigma_3^2} &= \frac{1}{\sigma_1^2}+\frac{1}{\sigma_2^2}.
+        \end{align}
+        A compara\'c\~ao com \eqref{eq:expansion-alt} mostra que podemos escrever ainda:
+        \begin{align}
+            \frac{x^2}{2 \sigma_3^2} - \frac{x}{\sigma_3^2} \sigma_3^2\left( \frac{m_1}{\sigma_1^2}+\frac{m_2}{\sigma_2^2}\right) &=  \frac{ (x-m_3)^2 }{2 \sigma_3^2} + \text{const}
+        \end{align}
+        onde:
+        \begin{align}
+            m_3 & =  \sigma_3^2\left( \frac{m_1}{\sigma_1^2}+\frac{m_2}{\sigma_2^2}\right)
+        \end{align}
+        de modo que:
+        \begin{align}
+            -\log \left[\Gauss(x | m_1, \sigma_1^2) \Gauss(x | m_2, \sigma_2^2) \right]  & = \frac{ (x-m_3)^2 }{2 \sigma_3^2} + \text{const}
+        \end{align}
+        e assim:
+        \begin{align}
+            \Gauss(x | m_1, \sigma_1^2) \Gauss(x | m_2, \sigma_2^2) & \propto  \Gauss(x | m_3, \sigma_3^2).
+        \end{align}
+        Note que a identidade:
+        \begin{align}
+            m_3 & = \sigma_3^2\left( \frac{m_1}{\sigma_1^2}+ \frac{m_2}{\sigma_2^2}\right) = m_1 + \frac{\sigma_1^2}{\sigma_1^2+\sigma_2^2}(m_2-m_1)
+        \end{align}
+        \'e obtida como segue:
+        \begin{align}
+            \sigma_3^2\left( \frac{m_1}{\sigma_1^2}+ \frac{m_2}{\sigma_2^2}\right) & =  \frac{\sigma_1^2 \sigma_2^2}{\sigma_1^2+\sigma_2^2}\left( \frac{m_1}{\sigma_1^2}+ \frac{m_2}{\sigma_2^2}\right)\\
+            & =  m_1 \frac{\sigma_2^2}{\sigma_1^2+\sigma_2^2}+ m_2 \frac{\sigma_1^2}{\sigma_1^2+\sigma_2^2}\\
+            & = m_1 \left(1- \frac{\sigma_1^2}{\sigma_1^2+\sigma_2^2}\right) + m_2 \frac{\sigma_1^2}{\sigma_1^2+\sigma_2^2}\\
+            & = m_1 + \frac{\sigma_1^2}{\sigma_1^2+\sigma_2^2} (m_2-m_1)
+        \end{align}
+        
+    \end{solution}
+    
+    
+    \item Podemos usar a ``recurs\~ao alfa'' para computar recursivamente $p(h_t | v_{1:t}) \propto
+    \alpha(h_t)$ da seguinte forma:
+    \begin{align}
+        \alpha(h_1) & = p(h_1) \cdot  p(v_1 | h_1) &
+        \alpha(h_s) &=  p(v_s | h_s) \sum_{h_{s-1}} p(h_s | h_{s-1}) \alpha(h_{s-1}).
+    \end{align}
+    Para vari\'aveis aleat\'orias cont\'inuas, a soma acima torna-se uma integral, de modo que:
+    \begin{align}
+        \alpha(h_s) &=  p(v_s | h_s) \int p(h_s | h_{s-1}) \alpha(h_{s-1}) \ud h_{s-1}.
+        \label{eq:cont-alpha-alt}
+    \end{align}
+    
+    Para refer\^encia, denotemos a integral por $I(h_s)$:
+    \begin{equation}
+        I(h_s) = \int p(h_s | h_{s-1}) \alpha(h_{s-1}) \ud h_{s-1}.
+        \label{eq:I-def-kalman-alt}
+    \end{equation}
+    Note que $I(h_s)$ \'e proporcional \`a distribui\'c\~ao preditiva $p(h_s | v_{1:s-1})$.
+    
+    Para uma distribui\'c\~ao a priori Gaussiana para $h_1$ e probabilidade de emiss\~ao
+    Gaussiana $p(v_1 | h_1)$, $\alpha(h_1) = p(h_1) \cdot p(v_1 | h_1)
+    \propto p(h_1 | v_1)$ \'e proporcional a uma Gaussiana. Denotamos sua
+    m\'edia por $\mu_1$ e sua vari\^ancia por $\sigma_1^2$, de modo que:
+    \begin{equation}
+        \alpha(h_1) \propto \Gauss(h_1 | \mu_1, \sigma_1^2).
+    \end{equation}
+    Assumindo que $\alpha(h_{s-1}) \propto \Gauss(h_{s-1} | \mu_{s-1}, \sigma_{s-1}^2)$ (o que vale para $s=2$), use a Equa\'c\~ao \eqref{eq:Gaussian-int-alt} para mostrar que:
+    \begin{align}
+        I(h_s) & \propto \Gauss(h_s | A_s \mu_{s-1}, P_s)
+    \end{align}
+    onde:
+    \begin{align}
+        P_s & = A^2_s \sigma^2_{s-1} + B_s^2.
+    \end{align}
+    
+    \begin{solution}
+        Podemos definir $\alpha(h_{s-1}) \propto \Gauss(h_{s-1} | \mu_{s-1}, \sigma_{s-1}^2)$. Como $p(h_s | h_{s-1})$ \'e Gaussiana, veja a Equa\'c\~ao \eqref{eq:transition-alt}, a Equa\'c\~ao \eqref{eq:I-def-kalman-alt} torna-se:
+        \begin{align}
+            I(h_s) &\propto \int  \Gauss(h_s | A_s h_{s-1}, B^2_s)  \Gauss(h_{s-1} | \mu_{s-1}, \sigma_{s-1}^2) \ud h_{s-1}.
+        \end{align}
+        A Equa\'c\~ao \eqref{eq:Gaussian-int-alt} com $x \equiv h_{s-1}$ e $y \equiv h_s$ fornece o resultado desejado:
+        \begin{align}
+            I(h_s) &\propto  \Gauss(h_s | A_s \mu_{s-1}, A_s^2 \sigma_{s-1}^2+B_s^2).
+            \label{eq:prediction-Gaussian-alt}
+        \end{align}
+        Podemos entender a equa\'c\~ao da seguinte forma: Para calcular a
+        m\'edia preditiva de $h_s $ dado $v_{1:s-1}$, propagamos a
+        m\'edia de $h_{s-1} | v_{1:s-1}$ usando a equa\'c\~ao de atualiza\'c\~ao
+        \eqref{eq:transition-model-alt}. Isso fornece o termo de m\'edia $A_s
+        \mu_{s-1}$. Como $h_{s-1} | v_{1:s-1}$ tem vari\^ancia
+        $\sigma_{s-1}^2$, a vari\^ancia de $h_s | v_{1:s-1}$ \'e dada por
+        $A_s^2 \sigma_{s-1}^2$ mais um termo adicional, $B_s^2$, devido ao
+        ru\'ido na propaga\'c\~ao para frente. Isso resulta no termo de vari\^ancia
+        $A_s^2 \sigma_{s-1}^2+B_s^2$.
+        
+    \end{solution}
+    
+    \item Use a Equa\'c\~ao \eqref{eq:Gaussian-mult-alt} para mostrar que:
+    \begin{align}
+        \alpha(h_s) & \propto \Gauss\left(h_s | \mu_s , \sigma_s^2\right)
+    \end{align}
+    onde:
+    \begin{align}
+        \mu_s & =  A_s \mu_{s-1} + \frac{P_sC_s}{C_s^2 P_s+ D_s^2}\left(v_s - C_s A_s \mu_{s-1}\right)\\
+        \sigma^2_s & =  \frac{P_s D_s^2}{P_s C_s^2+ D_s^2}
+    \end{align}
+    
+    \begin{solution}
+        Tendo computado $I(h_s)$, o passo final na recurs\~ao alfa \'e:
+        \begin{align}
+            \alpha(h_s) & = p(v_s | h_s) I(h_s)
+        \end{align}
+        Com a Equa\'c\~ao \eqref{eq:emission-alt} obtemos:
+        \begin{align}
+            \alpha(h_s) & \propto \Gauss(v_s | C_s h_s, D^2_s)  \Gauss(h_s | A_s \mu_{s-1}, P_s).
+        \end{align}
+        Notamos ainda que:
+        \begin{align}
+            \Gauss(v_s | C_s h_s, D_s^2) \propto \Gauss \left(h_s | C_s^{-1}
+            v_s, \frac{D_s^2}{C_s^2}\right)
+        \end{align}
+        de modo que podemos aplicar a Equa\'c\~ao \eqref{eq:Gaussian-mult-alt} (com $m_1 = A \mu_{s-1}$, $\sigma_1^2 = P_s$):
+        \begin{align}
+            \alpha(h_s) & \propto  \Gauss\left(h_s | C_s^{-1} v_s, \frac{D_s^2}{C_s^2}\right) \Gauss(h_s | A_s \mu_{s-1}, P_s)\\
+            & \propto \Gauss\left(h_s, \mu_s, \sigma_s^2\right)
+        \end{align}
+        com:
+        \begin{align}
+            \mu_s & =  A_s \mu_{s-1} + \frac{P_s}{P_s + \frac{D_s^2}{C_s^2}}\left(C_s^{-1} v_s - A_s \mu_{s-1}\right)\\
+            & =  A_s \mu_{s-1} + \frac{P_sC_s^2}{C_s^2 P_s+ D_s^2}\left(C_s^{-1}v_s - A_s \mu_{s-1}\right)\\
+            & =  A_s \mu_{s-1} + \frac{P_sC_s}{C_s^2 P_s+ D_s^2}\left(v_s - C_s A_s \mu_{s-1}\right)\\
+            \sigma^2_s & = \frac{P_s \frac{D_s^2}{C_s^2}}{P_s + \frac{D_s^2}{C_s^2}}\\
+            & =  \frac{P_s D_s^2}{P_s C_s^2+ D_s^2}\\
+        \end{align}
+    \end{solution}
+    
+    \item Mostre que $\alpha(h_s)$ pode ser reescrita como:
+    \begin{align}
+        \alpha(h_s) & \propto \Gauss\left(h_s | \mu_s , \sigma_s^2\right)
+    \end{align}
+    onde:
+    \begin{align}
+        \mu_s & = A_s \mu_{s-1} + K_s \left(v_s - C_s A_s \mu_{s-1}\right) \label{eq:mu-def-alt}\\
+        \sigma_s^2 & = (1-K_sC_s)P_s\\
+        K_s & = \frac{P_s C_s}{C_s^2 P_s + D_s^2}
+    \end{align}
+    Estas s\~ao as equa\'c\~oes do filtro de Kalman e $K_s$ \'e chamado de ganho do filtro de Kalman.
+    
+    \begin{solution}
+        Come\'camos a partir de:
+        \begin{align}
+            \mu_s & = A_s \mu_{s-1} + \frac{P_sC_s}{C_s^2 P_s+ D_s^2}\left(v_s - C_s A_s \mu_{s-1}\right),
+        \end{align}
+        e vemos que:
+        \begin{equation}
+            \frac{P_sC_s}{C_s^2 P_s+ D_s^2} = K_s
+        \end{equation}
+        de modo que:
+        \begin{align}
+            \mu_s & = A_s \mu_{s-1} + K_s \left(v_s - C_s A_s \mu_{s-1}\right).
+        \end{align}
+        Para a vari\^ancia $\sigma_s^2$, temos:
+        \begin{align}
+            \sigma^2_s  & =  \frac{P_s D_s^2}{P_s C_s^2+ D_s^2}\\
+            & =\frac{D_s^2}{P_s C_s^2+ D_s^2}  P_s \\
+            & = \left(1- \frac{P_sC_s^2}{P_s C_s^2+ D_s^2}\right) P_s\\
+            & = (1- K_s C_s) P_s,
+        \end{align}
+        que \'e o resultado desejado.
+        
+        O resultado da filtragem generaliza-se para latentes e
+        vis\'iveis com valores vetoriais, onde as distribui\'c\~oes de transi\'c\~ao e
+        emiss\~ao em \eqref{eq:transition-alt} e \eqref{eq:emission-alt} tornam-se:
+        \begin{align}
+            p(\h_s | \h_{s-1}) & = \Gauss(\h_s | \A_s \h_{s-1}, \Sigmab^h),\\
+            p(\v_s | \h_s) & = \Gauss( \v_s | \C_s \h_s, \Sigmab^v),
+        \end{align}
+        onde $\Gauss()$ denota fdps Gaussianas multivariadas, e.g.:
+        \begin{align}
+            \Gauss(\v_s | \C_s \h_s, \Sigmab^v) &= \frac{1}{|\det( 2\pi \Sigmab^v)|^{1/2}}\exp\left( -\frac{1}{2} (\v_s-\C_s \h_s)^\top (\Sigmab^v)^{-1}(\v_s-\C_s \h_s)\right).
+        \end{align}
+        Temos ent\~ao:
+        \begin{align}
+            p(\h_t | \v_{1:t}) & = \Gauss( \h_t | \mub_t, \Sigmab_t)
+        \end{align}
+        onde a m\'edia e a vari\^ancia posteriores s\~ao computadas recursivamente como:
+        \begin{align}
+            \mub_s & = \A_s \mub_{s-1} + \K_s ( \v_s-\C_s \A_s \mub_{s-1} )\\
+            \Sigmab_s & = (\I - \K_s \C_s) \PP_s\\
+            \PP_s & = \A_s \Sigmab_{s-1} \A_s^\top + \Sigmab^h\\
+            \K_s & = \PP_s \C_s^\top \left( \C_s \PP_s \C_s^\top + \Sigmab^v \right)^{-1}
+        \end{align}
+        e inicializadas com $\mub_1$ e $\Sigmab_1$ iguais \`a m\'edia
+        e vari\^ancia de $p(\h_1 | \v_1)$. A matriz $\K_s$ \'e ent\~ao
+        chamada de matriz de ganho de Kalman.
+        
+        O filtro de Kalman \'e amplamente aplic\'avel, veja
+        e.g.\ \url{https://en.wikipedia.org/wiki/Kalman_filter}, e
+        desempenhou um papel em eventos hist\'oricos, como o pouso
+        na lua, veja e.g.\ \citep{Grewal2010}.
+        
+        Um exemplo da aplica\'c\~ao do filtro de Kalman ao rastreamento
+        (tracking) \'e mostrado na Figura \ref{fig:Kalman-tracking-alt}.
+        \begin{figure}[h]
+            \centering
+            \includegraphics[width=0.5 \textwidth]{Figure13-22}
+            \caption{ \label{fig:Kalman-tracking-alt} Filtragem de Kalman para o rastreamento de um objeto em movimento. Os pontos azuis indicam as posi\'c\~oes reais do objeto em um espa\'co bidimensional em passos de tempo sucessivos, os pontos verdes denotam medi\'c\~oes ruidosas das posi\'c\~oes, e as cruzes vermelhas indicam as m\'edias das distribui\'c\~oes posteriores inferidas das posi\'c\~oes obtidas pela execu\'c\~ao das equa\'c\~oes de filtragem de Kalman. As covari\^ancias das posi\'c\~oes inferidas s\~ao indicadas pelas elipses vermelhas, que correspondem a contornos com um desvio padr\~ao. \citep[Figura 13.22]{Bishop2006}}
+        \end{figure}
+        
+        
+    \end{solution}
+    
+    \item Explique a Equa\'c\~ao \eqref{eq:mu-def-alt} em termos n\~ao t\'ecnicos. O que acontece se a vari\^ancia $D_s^2$ do ru\'ido de observa\'c\~ao tender a zero?
+    
+    \begin{solution}
+        J\'a vimos que $A_s \mu_{s-1}$ \'e a m\'edia preditiva de $h_s$ dado $v_{1:s-1}$. O termo $C_s A_s \mu_{s-1}$
+        \'e, portanto, a m\'edia preditiva de $v_s$ dadas as observa\'c\~oes at\'e
+        ent\~ao, $v_{1:s-1}$. A diferen\'ca $v_s - C_s A_s \mu_{s-1}$ \'e,
+        assim, o erro de predi\'c\~ao da observ\'avel. Como $\alpha(h_s)$ \'e
+        proporcional a $p(h_s | v_{1:s})$ e $\mu_s$ sua m\'edia,
+        vemos assim que a m\'edia posterior de $h_s | v_{1:s}$ \'e igual \`a
+        m\'edia posterior de $h_s | v_{1:s-1}$, $A_s \mu_{s-1}$, atualizada
+        pelo erro de predi\'c\~ao da observ\'avel ponderado pelo
+        ganho de Kalman.
+        
+        Para $D_s^2 \to 0$, $K_s \to C_s^{-1}$ e:
+        \begin{align}
+            \mu_s & = A_s \mu_{s-1} + K_s \left(v_s - C_s A_s \mu_{s-1}\right) \\
+            & = A_s \mu_{s-1} + C_s^{-1} \left(v_s - C_s A_s \mu_{s-1}\right) \\
+            & = A_s \mu_{s-1} + C_s^{-1} v_s - A_s \mu_{s-1}\\
+            & =  C_s^{-1} v_s,
+        \end{align}
+        de modo que a m\'edia posterior de $p(h_s | v_{1:s})$ \'e obtida
+        invertendo a equa\'c\~ao de observa\'c\~ao. Al\'em disso, a vari\^ancia
+        $\sigma_s^2$ de $h_s | v_{1:s}$ tende a zero, de modo que o valor
+        de $h_s$ \'e conhecido com precis\~ao e \'e igual a $C_s^{-1} v_s$.
+        
+    \end{solution}
+\end{exenumerate}

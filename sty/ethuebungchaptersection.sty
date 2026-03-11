@@ -225,14 +225,14 @@
 \newcounter{uebcounter}
 \setcounter{uebcounter}{0}
 \renewcommand{\theuebcounter}{\arabic{uebcounter}}
-\newcommand{\theHuebcounter}{\arabic{uebcounter}} % for hyperref
+\providecommand{\theHuebcounter}{\arabic{uebcounter}} % for hyperref
 %
 % Counter for \subuebung{}/\subexercise{}
 %
 \newcounter{subuebcounter}[uebcounter]
 \setcounter{subuebcounter}{0}
 \renewcommand{\thesubuebcounter}{\theuebcounter.\arabic{subuebcounter}}
-\newcommand{\theHsubuebcounter}{\theHuebcounter.\arabic{subuebcounter}} % for hyperref
+\providecommand{\theHsubuebcounter}{\theHuebcounter.\arabic{subuebcounter}} % for hyperref
 
 
 %
@@ -2027,7 +2027,10 @@
   \RequirePackage[german]{babel}%
   \selectlanguage{german}%
 }
-
+\def\ueb@loadbabel@Portuguese{%
+    \RequirePackage[portuguese]{babel}%
+    \selectlanguage{portuguese}%
+}
 %
 % Internal conditional to remember if the user wanted us to load the babel package for
 % him/her.
@@ -2162,6 +2165,32 @@
   \UebungTextAttachedSolution{The solution to this exercise is attached on
     page~\uebthepageattached.}%
   %
+}
+
+
+%
+% labels & definitions specific to Portuguese
+%
+
+\newcommand{\ueb@setlanguage@Portuguese}{%
+    \UebungLabel{Exerc\'icio}%
+    \UebungSubLabel{}%
+    \UebungSolLabel{Solu\'c\~ao.}%
+    \UebungHinweisLabel{Dica.}%
+    \UebungHinweiseLabel{Dicas.}%
+    \UebungSolEquationLabel{S.}%
+    \UebungTipsLabel{Sugest\~oes.}%
+    \UebungTipsEquationLabel{T.}%
+    \UebungsblattTitleSeries{S\'erie}%
+    \UebungsblattTitleSolutions{Solu\'c\~oes}%
+    \UebungsblattTitleTips{Sugest\~oes}%
+    \UebungDueByLabel{Data de entrega}%
+    \UebungDiscussionLabel{Discuss\~ao}%
+    % 
+    \UebungAttachedSolutionTitle{Solu\'c\~ao do 
+        Exerc\'icio~\uebattachedsolutiontheexercisenumber.}%
+    \UebungTextAttachedSolution{A solu\'c\~ao deste exerc\'icio encontra-se na 
+        p\'agina~\uebthepageattached.}%
 }
 
 %
@@ -2323,6 +2352,7 @@
         {\Large\bfseries%
           \ueb@iflanguage{Deutsch}{\"Ubungen zur Vorlesung: \theUebungLecture}{}%
           \ueb@iflanguage{English}{Exercises for the lecture: \theUebungLecture}{}%
+          \ueb@iflanguage{Portuguese}{Exerc\'icios para o t\'opico: \theUebungLecture}{}%
           \medskip%
         }%
       \end{center}%
@@ -2338,6 +2368,7 @@
             \ueb@TheDueByLabel: & \hspace*{1.2cm} & \ueb@TheDueBy \\ %
             \ueb@iflanguage{Deutsch}{Besprechung}{}%
             \ueb@iflanguage{English}{Discussion}{}%
+            \ueb@iflanguage{English}{Discuss\~ao}{}%
             : &ETH& \ETHUNI@beETH \\%
             &UZH& \ETHUNI@beUZH \\%
           \end{tabular*}% 
@@ -2383,6 +2414,7 @@
         \begin{flushright}%
           \ueb@iflanguage{Deutsch}{Blatt}{}%
           \ueb@iflanguage{English}{Sheet}{}%
+          \ueb@iflanguage{Portugueseh}{Folha}{}%
           ~\theUebungsblattNumber{} -- \theUebungSemester%
         \end{flushright}%
       \end{minipage}%
@@ -2420,6 +2452,7 @@
   % 
   \ueb@iflanguage{Deutsch}{\ETHUNIInstitut{Institut f\"ur Theoretische Physik}}{}%
   \ueb@iflanguage{English}{\ETHUNIInstitut{Institute for Theoretical Physics}}{}%
+  \ueb@iflanguage{Portuguese}{\ETHUNIInstitut{Instituto de F\'isica Te\'orica}}{}%
   % 
   \def\ETHUNI@url{}%
   %
@@ -2428,6 +2461,7 @@
   %
   \ueb@iflanguage{Deutsch}{\UebungsblattTitleSeries{Blatt}}{}%
   \ueb@iflanguage{English}{\UebungsblattTitleSeries{Series}}{}%
+  \ueb@iflanguage{English}{\UebungsblattTitleSeries{S\'eries}}{}%
   %
   \ueb@iflanguage{Deutsch}{%
     \renewcommand{\uebSerieTitle}{\uebUebungsBlattTitle{} f\"ur
@@ -2437,6 +2471,10 @@
     \renewcommand{\uebSerieTitle}{\uebUebungsBlattTitle{} for
       Sheet~\theUebungsblattNumber}%
     }{}%
+  \ueb@iflanguage{Portuguese}{%
+      \renewcommand{\uebSerieTitle}{\uebUebungsBlattTitle{} para
+          Folha~\theUebungsblattNumber}%
+  }{}%
   %
 }%
 
@@ -2892,6 +2930,10 @@
   % this will also load English babel package
   \ueb@AfterOptions{\UebungLanguage{English}}
 }
+\DeclareOption{portuguese}{
+    % this will also load English babel package
+    \ueb@AfterOptions{\UebungLanguage{Portuguese}}
+}
 \DeclareOption{deutsch}{
   % this will setup German labels and also load German babel package
   \ueb@AfterOptions{\UebungLanguage{Deutsch}}
@@ -2910,7 +2952,7 @@
 }
 \DeclareOption*{
   \PackageError{ethuebung}{Unknown option `\CurrentOption'. 
-    Available options are sol, tips, english, deutsch, nobabel, noexenum, nogeom, and nohyperref}
+    Available options are sol, tips, english, deutsch, portuguese, nobabel, noexenum, nogeom, and nohyperref}
 }
 \ProcessOptions\relax
 

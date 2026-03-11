@@ -66,6 +66,10 @@
 % correct for added space after math equation
 \newcommand{\mathpause}{\vspace*{-\baselineskip}\pause}
 
+% saving \c{c}:
+\let\oldc\c
+\DeclareTextCompositeCommand{\'}{T1}{c}{\oldc{c}}
+\DeclareTextCompositeCommand{\'}{OT1}{c}{\oldc{c}}
 
 % vectors
 \renewcommand{\a}{\mathbf{a}}

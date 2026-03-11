@@ -19,8 +19,8 @@ Essa coleção consiste em exercícios (majoritariamente de caneta e papel) com 
 - inferência variacional
 
 O PDF traduzido está disponível em:
-* [Livro sem respostas dos Exercícios](Pen_and_Paper.pdf)
-* [Livro com respostas dos Exercícios](Pen_and_Paper-com_respostas.pdf)
+* [Livro de Exercícios (sem as respostas)](Pen_and_Paper.pdf)
+* [Livro de Exercícios (com as respostas)](Pen_and_Paper-com_respostas.pdf)
 
 O PDF compilado original está disponível no [arXiv](https://arxiv.org/abs/2206.13446).
 
@@ -70,8 +70,8 @@ This is a collection of (mostly) pen-and-paper exercises in machine learning. Ea
 - variational inference
 
 The translated PDF is available at:
-* [Livro sem respostas dos Exercícios](Pen_and_Paper.pdf)
-* [Livro com respostas dos Exercícios](Pen_and_Paper-com_respostas.pdf)
+* [Exercises Book (without answers)](Pen_and_Paper.pdf)
+* [Exercises Book (with answers)](Pen_and_Paper-com_respostas.pdf)
 
 A compiled pdf is available on [arXiv](https://arxiv.org/abs/2206.13446).  
 
